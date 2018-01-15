@@ -1,0 +1,9 @@
+*/bin/*
+*.zip
+*.7z
+*.suo
+bin/*
+obj/*
+*/obj/*
+obj
+bin
