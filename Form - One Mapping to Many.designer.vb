@@ -43,6 +43,13 @@ Partial Class frmDuplicatePart
         Me.Label5 = New System.Windows.Forms.Label()
         Me.Label6 = New System.Windows.Forms.Label()
         Me.gb_ExcelInfo = New System.Windows.Forms.GroupBox()
+        Me.Label12 = New System.Windows.Forms.Label()
+        Me.btnClearName = New System.Windows.Forms.Button()
+        Me.btnClearLabel = New System.Windows.Forms.Button()
+        Me.cboxName = New System.Windows.Forms.ComboBox()
+        Me.Label1 = New System.Windows.Forms.Label()
+        Me.cboxLabel = New System.Windows.Forms.ComboBox()
+        Me.Label7 = New System.Windows.Forms.Label()
         Me.chkbox_SINotation = New System.Windows.Forms.CheckBox()
         Me.chkbox_IgnoreHeader = New System.Windows.Forms.CheckBox()
         Me.chkbox_ReadAllSheets = New System.Windows.Forms.CheckBox()
@@ -70,12 +77,9 @@ Partial Class frmDuplicatePart
         Me.gb_Options = New System.Windows.Forms.GroupBox()
         Me.chkbox_RemoveOriginal = New System.Windows.Forms.CheckBox()
         Me.btn_Copy = New System.Windows.Forms.Button()
-        Me.btnClearName = New System.Windows.Forms.Button()
-        Me.btnClearLabel = New System.Windows.Forms.Button()
-        Me.cboxName = New System.Windows.Forms.ComboBox()
-        Me.Label1 = New System.Windows.Forms.Label()
-        Me.cboxLabel = New System.Windows.Forms.ComboBox()
-        Me.Label7 = New System.Windows.Forms.Label()
+        Me.btnClearHeight = New System.Windows.Forms.Button()
+        Me.cbox_Height = New System.Windows.Forms.ComboBox()
+        Me.Label13 = New System.Windows.Forms.Label()
         Me.StatusStrip1.SuspendLayout()
         Me.Panel1.SuspendLayout()
         Me.plSpreadsheetInfo.SuspendLayout()
@@ -91,7 +95,7 @@ Partial Class frmDuplicatePart
         Me.StatusStrip1.BackColor = System.Drawing.SystemColors.Control
         Me.StatusStrip1.ImageScalingSize = New System.Drawing.Size(20, 20)
         Me.StatusStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ts_Status, Me.WaitGif})
-        Me.StatusStrip1.Location = New System.Drawing.Point(0, 585)
+        Me.StatusStrip1.Location = New System.Drawing.Point(0, 664)
         Me.StatusStrip1.Name = "StatusStrip1"
         Me.StatusStrip1.Padding = New System.Windows.Forms.Padding(1, 0, 19, 0)
         Me.StatusStrip1.Size = New System.Drawing.Size(851, 25)
@@ -122,7 +126,7 @@ Partial Class frmDuplicatePart
         Me.Panel1.Location = New System.Drawing.Point(0, 0)
         Me.Panel1.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel1.Name = "Panel1"
-        Me.Panel1.Size = New System.Drawing.Size(423, 585)
+        Me.Panel1.Size = New System.Drawing.Size(423, 664)
         Me.Panel1.TabIndex = 17
         '
         'plSpreadsheetInfo
@@ -133,7 +137,7 @@ Partial Class frmDuplicatePart
         Me.plSpreadsheetInfo.Enabled = False
         Me.plSpreadsheetInfo.Location = New System.Drawing.Point(0, 65)
         Me.plSpreadsheetInfo.Name = "plSpreadsheetInfo"
-        Me.plSpreadsheetInfo.Size = New System.Drawing.Size(423, 520)
+        Me.plSpreadsheetInfo.Size = New System.Drawing.Size(423, 599)
         Me.plSpreadsheetInfo.TabIndex = 97
         '
         'Panel2
@@ -150,7 +154,7 @@ Partial Class frmDuplicatePart
         Me.Panel2.Controls.Add(Me.Label5)
         Me.Panel2.Controls.Add(Me.Label6)
         Me.Panel2.Dock = System.Windows.Forms.DockStyle.Bottom
-        Me.Panel2.Location = New System.Drawing.Point(0, 394)
+        Me.Panel2.Location = New System.Drawing.Point(0, 473)
         Me.Panel2.Margin = New System.Windows.Forms.Padding(4)
         Me.Panel2.Name = "Panel2"
         Me.Panel2.Size = New System.Drawing.Size(423, 126)
@@ -271,6 +275,10 @@ Partial Class frmDuplicatePart
         '
         'gb_ExcelInfo
         '
+        Me.gb_ExcelInfo.Controls.Add(Me.btnClearHeight)
+        Me.gb_ExcelInfo.Controls.Add(Me.cbox_Height)
+        Me.gb_ExcelInfo.Controls.Add(Me.Label13)
+        Me.gb_ExcelInfo.Controls.Add(Me.Label12)
         Me.gb_ExcelInfo.Controls.Add(Me.btnClearName)
         Me.gb_ExcelInfo.Controls.Add(Me.btnClearLabel)
         Me.gb_ExcelInfo.Controls.Add(Me.cboxName)
@@ -299,15 +307,95 @@ Partial Class frmDuplicatePart
         Me.gb_ExcelInfo.Margin = New System.Windows.Forms.Padding(4)
         Me.gb_ExcelInfo.Name = "gb_ExcelInfo"
         Me.gb_ExcelInfo.Padding = New System.Windows.Forms.Padding(4)
-        Me.gb_ExcelInfo.Size = New System.Drawing.Size(423, 520)
+        Me.gb_ExcelInfo.Size = New System.Drawing.Size(423, 599)
         Me.gb_ExcelInfo.TabIndex = 97
         Me.gb_ExcelInfo.TabStop = False
         Me.gb_ExcelInfo.Text = "Excel Info"
         '
+        'Label12
+        '
+        Me.Label12.AutoSize = True
+        Me.Label12.Location = New System.Drawing.Point(7, 162)
+        Me.Label12.Name = "Label12"
+        Me.Label12.Size = New System.Drawing.Size(142, 17)
+        Me.Label12.TabIndex = 177
+        Me.Label12.Text = "Optional Parameters:"
+        '
+        'btnClearName
+        '
+        Me.btnClearName.BackColor = System.Drawing.SystemColors.ButtonFace
+        Me.btnClearName.Location = New System.Drawing.Point(259, 228)
+        Me.btnClearName.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnClearName.Name = "btnClearName"
+        Me.btnClearName.Size = New System.Drawing.Size(27, 26)
+        Me.btnClearName.TabIndex = 174
+        Me.btnClearName.Text = "X"
+        Me.btnClearName.UseVisualStyleBackColor = False
+        Me.btnClearName.Visible = False
+        '
+        'btnClearLabel
+        '
+        Me.btnClearLabel.BackColor = System.Drawing.SystemColors.ButtonFace
+        Me.btnClearLabel.Location = New System.Drawing.Point(259, 195)
+        Me.btnClearLabel.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnClearLabel.Name = "btnClearLabel"
+        Me.btnClearLabel.Size = New System.Drawing.Size(27, 26)
+        Me.btnClearLabel.TabIndex = 173
+        Me.btnClearLabel.Text = "X"
+        Me.btnClearLabel.UseVisualStyleBackColor = False
+        Me.btnClearLabel.Visible = False
+        '
+        'cboxName
+        '
+        Me.cboxName.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.cboxName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
+        Me.cboxName.FormattingEnabled = True
+        Me.cboxName.Items.AddRange(New Object() {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"})
+        Me.cboxName.Location = New System.Drawing.Point(108, 228)
+        Me.cboxName.Margin = New System.Windows.Forms.Padding(4)
+        Me.cboxName.Name = "cboxName"
+        Me.cboxName.Size = New System.Drawing.Size(131, 24)
+        Me.cboxName.TabIndex = 171
+        '
+        'Label1
+        '
+        Me.Label1.Location = New System.Drawing.Point(5, 232)
+        Me.Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.Label1.Name = "Label1"
+        Me.Label1.Size = New System.Drawing.Size(99, 17)
+        Me.Label1.TabIndex = 169
+        Me.Label1.Text = "Part Name:"
+        Me.Label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        '
+        'cboxLabel
+        '
+        Me.cboxLabel.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.cboxLabel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
+        Me.cboxLabel.FormattingEnabled = True
+        Me.cboxLabel.Items.AddRange(New Object() {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"})
+        Me.cboxLabel.Location = New System.Drawing.Point(108, 195)
+        Me.cboxLabel.Margin = New System.Windows.Forms.Padding(4)
+        Me.cboxLabel.Name = "cboxLabel"
+        Me.cboxLabel.Size = New System.Drawing.Size(131, 24)
+        Me.cboxLabel.TabIndex = 172
+        '
+        'Label7
+        '
+        Me.Label7.Location = New System.Drawing.Point(5, 198)
+        Me.Label7.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.Label7.Name = "Label7"
+        Me.Label7.Size = New System.Drawing.Size(99, 17)
+        Me.Label7.TabIndex = 170
+        Me.Label7.Text = "Part Label:"
+        Me.Label7.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        '
         'chkbox_SINotation
         '
+        Me.chkbox_SINotation.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.chkbox_SINotation.AutoSize = True
-        Me.chkbox_SINotation.Location = New System.Drawing.Point(12, 307)
+        Me.chkbox_SINotation.Location = New System.Drawing.Point(12, 386)
         Me.chkbox_SINotation.Margin = New System.Windows.Forms.Padding(4)
         Me.chkbox_SINotation.Name = "chkbox_SINotation"
         Me.chkbox_SINotation.Size = New System.Drawing.Size(194, 21)
@@ -317,8 +405,9 @@ Partial Class frmDuplicatePart
         '
         'chkbox_IgnoreHeader
         '
+        Me.chkbox_IgnoreHeader.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.chkbox_IgnoreHeader.AutoSize = True
-        Me.chkbox_IgnoreHeader.Location = New System.Drawing.Point(12, 336)
+        Me.chkbox_IgnoreHeader.Location = New System.Drawing.Point(12, 415)
         Me.chkbox_IgnoreHeader.Margin = New System.Windows.Forms.Padding(4)
         Me.chkbox_IgnoreHeader.Name = "chkbox_IgnoreHeader"
         Me.chkbox_IgnoreHeader.Size = New System.Drawing.Size(245, 21)
@@ -328,8 +417,9 @@ Partial Class frmDuplicatePart
         '
         'chkbox_ReadAllSheets
         '
+        Me.chkbox_ReadAllSheets.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
         Me.chkbox_ReadAllSheets.AutoSize = True
-        Me.chkbox_ReadAllSheets.Location = New System.Drawing.Point(12, 365)
+        Me.chkbox_ReadAllSheets.Location = New System.Drawing.Point(12, 444)
         Me.chkbox_ReadAllSheets.Margin = New System.Windows.Forms.Padding(4)
         Me.chkbox_ReadAllSheets.Name = "chkbox_ReadAllSheets"
         Me.chkbox_ReadAllSheets.Size = New System.Drawing.Size(131, 21)
@@ -340,7 +430,7 @@ Partial Class frmDuplicatePart
         'btnClearValue
         '
         Me.btnClearValue.BackColor = System.Drawing.SystemColors.ButtonFace
-        Me.btnClearValue.Location = New System.Drawing.Point(259, 255)
+        Me.btnClearValue.Location = New System.Drawing.Point(259, 295)
         Me.btnClearValue.Margin = New System.Windows.Forms.Padding(4)
         Me.btnClearValue.Name = "btnClearValue"
         Me.btnClearValue.Size = New System.Drawing.Size(27, 26)
@@ -352,7 +442,7 @@ Partial Class frmDuplicatePart
         'btnClearDescription
         '
         Me.btnClearDescription.BackColor = System.Drawing.SystemColors.ButtonFace
-        Me.btnClearDescription.Location = New System.Drawing.Point(259, 222)
+        Me.btnClearDescription.Location = New System.Drawing.Point(259, 262)
         Me.btnClearDescription.Margin = New System.Windows.Forms.Padding(4)
         Me.btnClearDescription.Name = "btnClearDescription"
         Me.btnClearDescription.Size = New System.Drawing.Size(27, 26)
@@ -392,7 +482,7 @@ Partial Class frmDuplicatePart
         Me.cbox_Value.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cbox_Value.FormattingEnabled = True
         Me.cbox_Value.Items.AddRange(New Object() {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"})
-        Me.cbox_Value.Location = New System.Drawing.Point(108, 255)
+        Me.cbox_Value.Location = New System.Drawing.Point(108, 295)
         Me.cbox_Value.Margin = New System.Windows.Forms.Padding(4)
         Me.cbox_Value.Name = "cbox_Value"
         Me.cbox_Value.Size = New System.Drawing.Size(131, 24)
@@ -400,7 +490,7 @@ Partial Class frmDuplicatePart
         '
         'Label2
         '
-        Me.Label2.Location = New System.Drawing.Point(5, 259)
+        Me.Label2.Location = New System.Drawing.Point(5, 299)
         Me.Label2.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(99, 17)
@@ -415,7 +505,7 @@ Partial Class frmDuplicatePart
         Me.cbox_Description.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.cbox_Description.FormattingEnabled = True
         Me.cbox_Description.Items.AddRange(New Object() {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"})
-        Me.cbox_Description.Location = New System.Drawing.Point(108, 222)
+        Me.cbox_Description.Location = New System.Drawing.Point(108, 262)
         Me.cbox_Description.Margin = New System.Windows.Forms.Padding(4)
         Me.cbox_Description.Name = "cbox_Description"
         Me.cbox_Description.Size = New System.Drawing.Size(131, 24)
@@ -423,7 +513,7 @@ Partial Class frmDuplicatePart
         '
         'Label8
         '
-        Me.Label8.Location = New System.Drawing.Point(5, 225)
+        Me.Label8.Location = New System.Drawing.Point(5, 265)
         Me.Label8.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.Label8.Name = "Label8"
         Me.Label8.Size = New System.Drawing.Size(99, 17)
@@ -525,7 +615,7 @@ Partial Class frmDuplicatePart
         '
         Me.btn_Browse_SwapPN.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
         Me.btn_Browse_SwapPN.BackColor = System.Drawing.SystemColors.ButtonFace
-        Me.btn_Browse_SwapPN.Location = New System.Drawing.Point(373, 31)
+        Me.btn_Browse_SwapPN.Location = New System.Drawing.Point(376, 28)
         Me.btn_Browse_SwapPN.Margin = New System.Windows.Forms.Padding(4)
         Me.btn_Browse_SwapPN.Name = "btn_Browse_SwapPN"
         Me.btn_Browse_SwapPN.Size = New System.Drawing.Size(39, 25)
@@ -583,7 +673,7 @@ Partial Class frmDuplicatePart
         Me.dgvPNSwap.RowHeadersDefaultCellStyle = DataGridViewCellStyle6
         Me.dgvPNSwap.RowHeadersVisible = False
         Me.dgvPNSwap.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect
-        Me.dgvPNSwap.Size = New System.Drawing.Size(428, 512)
+        Me.dgvPNSwap.Size = New System.Drawing.Size(428, 591)
         Me.dgvPNSwap.TabIndex = 18
         '
         'DataGridViewTextBoxColumn1
@@ -604,7 +694,7 @@ Partial Class frmDuplicatePart
         Me.gb_Options.Controls.Add(Me.btn_Copy)
         Me.gb_Options.Dock = System.Windows.Forms.DockStyle.Bottom
         Me.gb_Options.Enabled = False
-        Me.gb_Options.Location = New System.Drawing.Point(423, 512)
+        Me.gb_Options.Location = New System.Drawing.Point(423, 591)
         Me.gb_Options.Margin = New System.Windows.Forms.Padding(4)
         Me.gb_Options.Name = "gb_Options"
         Me.gb_Options.Padding = New System.Windows.Forms.Padding(4)
@@ -636,82 +726,47 @@ Partial Class frmDuplicatePart
         Me.btn_Copy.Text = "Copy"
         Me.btn_Copy.UseVisualStyleBackColor = False
         '
-        'btnClearName
+        'btnClearHeight
         '
-        Me.btnClearName.BackColor = System.Drawing.SystemColors.ButtonFace
-        Me.btnClearName.Location = New System.Drawing.Point(259, 178)
-        Me.btnClearName.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnClearName.Name = "btnClearName"
-        Me.btnClearName.Size = New System.Drawing.Size(27, 26)
-        Me.btnClearName.TabIndex = 174
-        Me.btnClearName.Text = "X"
-        Me.btnClearName.UseVisualStyleBackColor = False
-        Me.btnClearName.Visible = False
+        Me.btnClearHeight.BackColor = System.Drawing.SystemColors.ButtonFace
+        Me.btnClearHeight.Location = New System.Drawing.Point(259, 327)
+        Me.btnClearHeight.Margin = New System.Windows.Forms.Padding(4)
+        Me.btnClearHeight.Name = "btnClearHeight"
+        Me.btnClearHeight.Size = New System.Drawing.Size(27, 26)
+        Me.btnClearHeight.TabIndex = 180
+        Me.btnClearHeight.Text = "X"
+        Me.btnClearHeight.UseVisualStyleBackColor = False
+        Me.btnClearHeight.Visible = False
         '
-        'btnClearLabel
+        'cbox_Height
         '
-        Me.btnClearLabel.BackColor = System.Drawing.SystemColors.ButtonFace
-        Me.btnClearLabel.Location = New System.Drawing.Point(259, 145)
-        Me.btnClearLabel.Margin = New System.Windows.Forms.Padding(4)
-        Me.btnClearLabel.Name = "btnClearLabel"
-        Me.btnClearLabel.Size = New System.Drawing.Size(27, 26)
-        Me.btnClearLabel.TabIndex = 173
-        Me.btnClearLabel.Text = "X"
-        Me.btnClearLabel.UseVisualStyleBackColor = False
-        Me.btnClearLabel.Visible = False
-        '
-        'cboxName
-        '
-        Me.cboxName.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+        Me.cbox_Height.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.cboxName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
-        Me.cboxName.FormattingEnabled = True
-        Me.cboxName.Items.AddRange(New Object() {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"})
-        Me.cboxName.Location = New System.Drawing.Point(108, 178)
-        Me.cboxName.Margin = New System.Windows.Forms.Padding(4)
-        Me.cboxName.Name = "cboxName"
-        Me.cboxName.Size = New System.Drawing.Size(131, 24)
-        Me.cboxName.TabIndex = 171
+        Me.cbox_Height.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
+        Me.cbox_Height.FormattingEnabled = True
+        Me.cbox_Height.Items.AddRange(New Object() {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"})
+        Me.cbox_Height.Location = New System.Drawing.Point(108, 327)
+        Me.cbox_Height.Margin = New System.Windows.Forms.Padding(4)
+        Me.cbox_Height.Name = "cbox_Height"
+        Me.cbox_Height.Size = New System.Drawing.Size(131, 24)
+        Me.cbox_Height.TabIndex = 179
         '
-        'Label1
+        'Label13
         '
-        Me.Label1.Location = New System.Drawing.Point(5, 182)
-        Me.Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(99, 17)
-        Me.Label1.TabIndex = 169
-        Me.Label1.Text = "Part Name:"
-        Me.Label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight
-        '
-        'cboxLabel
-        '
-        Me.cboxLabel.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
-            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.cboxLabel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
-        Me.cboxLabel.FormattingEnabled = True
-        Me.cboxLabel.Items.AddRange(New Object() {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"})
-        Me.cboxLabel.Location = New System.Drawing.Point(108, 145)
-        Me.cboxLabel.Margin = New System.Windows.Forms.Padding(4)
-        Me.cboxLabel.Name = "cboxLabel"
-        Me.cboxLabel.Size = New System.Drawing.Size(131, 24)
-        Me.cboxLabel.TabIndex = 172
-        '
-        'Label7
-        '
-        Me.Label7.Location = New System.Drawing.Point(5, 148)
-        Me.Label7.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
-        Me.Label7.Name = "Label7"
-        Me.Label7.Size = New System.Drawing.Size(99, 17)
-        Me.Label7.TabIndex = 170
-        Me.Label7.Text = "Part Label:"
-        Me.Label7.TextAlign = System.Drawing.ContentAlignment.MiddleRight
+        Me.Label13.Location = New System.Drawing.Point(5, 331)
+        Me.Label13.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Me.Label13.Name = "Label13"
+        Me.Label13.Size = New System.Drawing.Size(99, 17)
+        Me.Label13.TabIndex = 178
+        Me.Label13.Text = "Height:"
+        Me.Label13.TextAlign = System.Drawing.ContentAlignment.MiddleRight
         '
         'frmDuplicatePart
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Window
-        Me.ClientSize = New System.Drawing.Size(851, 610)
+        Me.ClientSize = New System.Drawing.Size(851, 689)
         Me.Controls.Add(Me.dgvPNSwap)
         Me.Controls.Add(Me.gb_Options)
         Me.Controls.Add(Me.Panel1)
@@ -790,4 +845,8 @@ Partial Class frmDuplicatePart
     Friend WithEvents Label1 As System.Windows.Forms.Label
     Friend WithEvents cboxLabel As ComboBox
     Friend WithEvents Label7 As System.Windows.Forms.Label
+    Friend WithEvents Label12 As System.Windows.Forms.Label
+    Friend WithEvents btnClearHeight As System.Windows.Forms.Button
+    Friend WithEvents cbox_Height As ComboBox
+    Friend WithEvents Label13 As System.Windows.Forms.Label
 End Class

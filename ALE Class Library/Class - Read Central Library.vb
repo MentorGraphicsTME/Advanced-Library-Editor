@@ -1,27 +1,33 @@
 ﻿Imports System.Threading.Tasks
+Imports System.Xml
 Imports AAL
 Imports LibraryManager
 
 Public Class LibraryRead
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
+#Region "Internal Fields"
 
-    Property alCellsNoSymbols As New ArrayList()
+    Friend xmlDoc As XmlDocument
 
-    Property alNoCellsNoSymbols As New ArrayList()
+#End Region
 
-    Property alSymbolsNoCells As New ArrayList()
+#Region "Private Fields"
 
-    Property alUnusedCells As New ArrayList()
+    'Dictionary
+    Dim dicCellsNoPins As New Dictionary(Of String, List(Of String))
 
-    'Arraylist
-    Property alUnusedSymbols As New ArrayList()
+    Dim libApp As LibraryManager.LibraryManagerApp
+    Dim lookatlog As Boolean = False
 
-    'Boolean
-    Property bFin As Boolean = False
+    'Mentor Graphics
+    Dim oPad As PadstackEditorLib.Pad
 
-    'List
-    Property CommonProperties As New List(Of String)
+    'String
+    Dim sLogPath As String
+
+#End Region
+
+#Region "Public Events"
 
     'Event
     Event eAddCell()
@@ -58,6 +64,8 @@ Public Class LibraryRead
 
     Event eReturnPartPropeties(partition As String, dic_PartProperties As Dictionary(Of String, List(Of String)), dic_PartNonCommonProperties As Dictionary(Of String, List(Of String)))
 
+    Event eReturnPDBXML(ByVal PDBXML As Xml.XmlDocument, ByVal PDB As String)
+
     Event eReuseBlocksComplete(ByVal ReuseBlockList As Dictionary(Of String, String), ByVal dic_ReuseBlocksByPartition As Dictionary(Of String, List(Of String)))
 
     Event eSymbolsComplete(ByVal SymbolList As Dictionary(Of String, List(Of String)), ByVal dic_SymbolsByPartition As Dictionary(Of String, List(Of String)))
@@ -65,6 +73,27 @@ Public Class LibraryRead
     Event eSymbolsReportComplete(ByVal SymbolsReport As Dictionary(Of String, AAL.SymbolPartition))
 
     Event eUpdateStatus(status As String)
+
+#End Region
+
+#Region "Public Properties"
+
+    Property alCellsNoSymbols As New ArrayList()
+
+    Property alNoCellsNoSymbols As New ArrayList()
+
+    Property alSymbolsNoCells As New ArrayList()
+
+    Property alUnusedCells As New ArrayList()
+
+    'Arraylist
+    Property alUnusedSymbols As New ArrayList()
+
+    'Boolean
+    Property bFin As Boolean = False
+
+    'List
+    Property CommonProperties As New List(Of String)
 
     'Dim pedDoc As MGCPCBPartsEditor.PartsDB
     Property libDoc As LibraryManager.IMGCLMLibrary
@@ -75,23 +104,6 @@ Public Class LibraryRead
     Property reservedPartPartitions As Integer = 0
 
     Property reservedSymbolPartitions As Integer = 0
-
-#End Region
-
-#Region "Private Fields + Properties + Events + Delegates + Enums"
-
-    'Dictionary
-    Dim dicCellsNoPins As New Dictionary(Of String, List(Of String))
-
-    Dim libApp As LibraryManager.LibraryManagerApp
-
-    Dim lookatlog As Boolean = False
-
-    'Mentor Graphics
-    Dim oPad As PadstackEditorLib.Pad
-
-    'String
-    Dim sLogPath As String
 
 #End Region
 
@@ -325,13 +337,15 @@ Public Class LibraryRead
             Task.WaitAll(tasks.ToArray())
 
             For Each readTask As Task(Of AAL.PartPartition) In tasks
+                Dim dic_PartInPartition As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
                 Dim aalPartition As AAL.PartPartition = readTask.Result
 
                 For Each part As AAL.Part In aalPartition.Parts
                     dic_PartList.Add(part.Number, aalPartition.Name)
+                    dic_PartInPartition.Add(part.Number, aalPartition.Name)
                 Next
 
-                dic_PartsByPartition.Add(aalPartition.Name, dic_PartList.Keys.ToList())
+                dic_PartsByPartition.Add(aalPartition.Name, dic_PartInPartition.Keys.ToList())
 
                 If Report = True Then
                     aalPartitions.Add(aalPartition)
@@ -572,6 +586,28 @@ Public Class LibraryRead
 
         RaiseEvent eReuseBlocksComplete(dic_PartList, dic_ReuseBlcoksByPartition)
 
+    End Sub
+
+#End Region
+
+#Region "Internal Methods"
+
+    Friend Sub exportPDBtoXML(pdbPartition As MGCPCBPartsEditor.Partition)
+
+        Dim l_Parts As New List(Of String)
+
+        Dim oPartition As New AAL.PartPartition
+        oPartition.Name = pdbPartition.Name
+
+        For Each pdbPart As MGCPCBPartsEditor.Part In pdbPartition.Parts
+
+            Dim aalPart As New AAL.Part(pdbPart)
+
+            aalPart.toXML(xmlDoc)
+
+        Next
+
+        RaiseEvent eReturnPDBXML(xmlDoc, pdbPartition.Name)
     End Sub
 
 #End Region

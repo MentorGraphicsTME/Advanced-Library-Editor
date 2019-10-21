@@ -2,42 +2,11 @@
 Imports System.IO
 Imports System.Text
 Imports System.Threading.Tasks
+Imports AAL
 
 Public Class frmBuildPDBfromProject
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
-
-    Delegate Sub d_BuildComplete(ByVal iPartsFailed As Integer, ByVal iPartsBuilt As Integer, ByVal partsNotConsidered As Integer)
-
-    'Delegates
-    Delegate Sub d_ReadComplete()
-
-    Delegate Sub d_UpdateMainParts(ByVal Partition As String, ByVal Part As String)
-
-    Delegate Sub d_UpdateProjectStatus()
-
-    Delegate Sub d_UpdateStatus(ByVal status As String)
-
-    Delegate Sub d_UpdateThreads()
-
-    Event eBuildComplete(ByVal iPartsFailed As Integer, ByVal iPartsBuilt As Integer, ByVal partsNotConsidered As Integer)
-
-    'Events
-    Event eBuildFailed()
-
-    Event eReadComplete()
-
-    Event eUpdateMainParts(ByVal Partition As String, ByVal Part As String)
-
-    Event eUpdateStatus(status As String)
-
-    Event eUpdateThreads()
-
-    Public Property LogFile As String
-
-#End Region
-
-#Region "Private Fields + Properties + Events + Delegates + Enums"
+#Region "Private Fields"
 
     Dim ActiveThreads As Integer = 1
 
@@ -58,24 +27,33 @@ Public Class frmBuildPDBfromProject
     Dim dic_Height As New Dictionary(Of String, Double)
 
     Dim dic_UnableToSave As New Dictionary(Of String, List(Of String))(StringComparer.OrdinalIgnoreCase)
+
     Dim dicBadParts As New Dictionary(Of String, List(Of String))(StringComparer.OrdinalIgnoreCase)
+
     Dim dicDuplicateParts As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
+
     Dim dicLogReport As New Dictionary(Of String, ArrayList)
+
     Dim dicPartsToProcess As New Dictionary(Of String, AAL.PartPartition)(StringComparer.OrdinalIgnoreCase)
+
     Dim dicSuccessfulByPartition As New Dictionary(Of String, List(Of String))
 
     'Integers
     Dim iBadParts As Integer = 0
 
     Dim iPartCount As Integer = 0
+
     Dim iPartsBuilt As Integer = 0
+
     Dim iPartsFailed As Integer = 0
 
     'List
     Dim l_UnableToSavePartition As New List(Of String)
 
     Private logLock As New Object
+
     Dim partsLeftToProcess As Integer
+
     Dim partsStack As Stack(Of AAL.Part)
 
     Dim pdbPartition As MGCPCBPartsEditor.Partition
@@ -89,12 +67,54 @@ Public Class frmBuildPDBfromProject
     Dim sExpPath As String
 
     Dim sProjectpath As String
+
     Dim timerTotal As New Stopwatch
 
     'Threads
     Dim tReadProject As Thread
 
     Dim xmlDebug As Xml.XmlDocument
+
+#End Region
+
+#Region "Public Delegates"
+
+    Delegate Sub d_BuildComplete(ByVal iPartsFailed As Integer, ByVal iPartsBuilt As Integer, ByVal partsNotConsidered As Integer)
+
+    'Delegates
+    Delegate Sub d_ReadComplete()
+
+    Delegate Sub d_UpdateMainParts(ByVal Partition As String, ByVal Part As String)
+
+    Delegate Sub d_UpdateProjectStatus()
+
+    Delegate Sub d_UpdateStatus(ByVal status As String)
+
+    Delegate Sub d_UpdateThreads()
+
+#End Region
+
+#Region "Public Events"
+
+    Event eBuildComplete(ByVal iPartsFailed As Integer, ByVal iPartsBuilt As Integer, ByVal partsNotConsidered As Integer)
+
+    'Events
+    Event eBuildFailed()
+
+    Event eReadComplete()
+
+    Event eUpdateMainParts(ByVal Partition As String, ByVal Part As String)
+
+    Event eUpdateStatus(status As String)
+
+    Event eUpdateThreads()
+
+#End Region
+
+#Region "Public Properties"
+
+    Public Property bRebuildParts As Boolean
+    Public Property LogFile As String
 
 #End Region
 
@@ -166,6 +186,10 @@ Public Class frmBuildPDBfromProject
 
         tsm_Exp.Visible = True
         tsm_DxD.Visible = True
+
+        bRebuildParts = chkbox_RebuildParts.Checked
+
+        gb_Options.Enabled = False
 
         tsm_Threads.Visible = False
 
@@ -279,7 +303,7 @@ MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1
 
                     If Not IsNothing(aalPart) Then
 
-                        If chkbox_RebuildParts.Checked = True Then
+                        If bRebuildParts = True Then
                             If frmMain.librarydata.PartList.ContainsKey(aalPart.Number) Then
                                 For Each pdbTempPartition As MGCPCBPartsEditor.Partition In pedDoc.Partitions
                                     For Each pdbPart As MGCPCBPartsEditor.Part In pdbTempPartition.Parts(MGCPCBPartsEditor.EPDBPartType.epdbPartAll, aalPart.Number)
@@ -320,12 +344,12 @@ MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1
                             iPartsBuilt += 1
                             RaiseEvent eUpdateMainParts(pdbPartition.Name, aalPart.Number)
                             'iPartsBuilt += 1
-                            For Each pn As String In aalPart.AssociatedParts
+                            For Each part As Part In aalPart.AssociatedParts
 
-                                If chkbox_RebuildParts.Checked = True Then
-                                    If frmMain.librarydata.PartList.ContainsKey(pn) Then
+                                If bRebuildParts = True Then
+                                    If frmMain.librarydata.PartList.ContainsKey(part.Number) Then
                                         For Each pdbTempPartition As MGCPCBPartsEditor.Partition In pedDoc.Partitions()
-                                            For Each pdbPart As MGCPCBPartsEditor.Part In pdbTempPartition.Parts(MGCPCBPartsEditor.EPDBPartType.epdbPartAll, pn)
+                                            For Each pdbPart As MGCPCBPartsEditor.Part In pdbTempPartition.Parts(MGCPCBPartsEditor.EPDBPartType.epdbPartAll, part.Number)
                                                 pdbPart.Delete()
                                             Next
                                         Next
@@ -334,19 +358,37 @@ MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1
                                 End If
 
                                 Try
-                                    pdbMapping.Copy(pn, pn, pn)
+                                    Dim pdbPart As MGCPCBPartsEditor.Part = pdbMapping.Copy(part.Number, part.Name, part.Label)
+
+                                    pdbPart.Description = part.Description
+
+                                    Dim oProperty As MGCPCBPartsEditor.Property
+
+                                    If Not part.Height = 0 Then
+
+                                        Try
+                                            If Not IsNothing(part.Unit) Then
+                                                oProperty = pdbPart.PutPropertyEx("Height", part.Height, part.Unit)
+                                            Else
+                                                oProperty = pdbPart.PutPropertyEx("Height", part.Height)
+                                            End If
+                                        Catch ex As Exception
+                                            ocBuildPDB.Warnings.Add("[Build PDB Error] Cannot add property: ""Height"", with value: " & part.Height)
+                                        End Try
+                                    End If
+
                                     iPartsBuilt += 1
 
-                                    RaiseEvent eUpdateMainParts(pdbPartition.Name, pn)
+                                    RaiseEvent eUpdateMainParts(pdbPartition.Name, part.Number)
                                 Catch ex As Exception
-                                    ocBuildPDB.Errors.Add("Can not copy pin mapping from " & pdbMapping.Number & " to " & pn & ". Error: " & ex.Message.ToString())
+                                    ocBuildPDB.Errors.Add("Can not copy pin mapping from " & pdbMapping.Number & " to " & part.Number & ". Error: " & ex.Message.ToString())
                                 End Try
                             Next
                         Else
                             iPartsFailed += 1
 
-                            For Each pn As String In aalPart.AssociatedParts
-                                ocBuildPDB.Errors.Add("Failed to add part " & pn & " because it was associated with a mapping " & aalPart.Number & " that filed to build.")
+                            For Each part As Part In aalPart.AssociatedParts
+                                ocBuildPDB.Errors.Add("Failed to add part " & part.Number & " because it was associated with a mapping " & aalPart.Number & " that filed to build.")
                                 iPartsFailed += 1
 
                             Next
@@ -783,7 +825,7 @@ MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1
             For Each aalPart As AAL.Part In aalPartition.Parts
 
                 If dicMappings.ContainsKey(aalPart.HashCode) Then
-                    dicMappings(aalPart.HashCode()).AssociatedParts.Add(aalPart.Number)
+                    dicMappings(aalPart.HashCode()).AssociatedParts.Add(aalPart)
                 Else
                     dicMappings(aalPart.HashCode()) = aalPart
                 End If
@@ -831,8 +873,8 @@ MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1
 
                     If (part.AssociatedParts.Count > 0) Then
                         Dim associatedNode As TreeNode = partNode.Nodes.Add("Associated Parts:")
-                        For Each PN As String In part.AssociatedParts
-                            associatedNode.Nodes.Add(PN)
+                        For Each subPart As Part In part.AssociatedParts
+                            associatedNode.Nodes.Add(subPart.Number)
                         Next
                     End If
 
@@ -930,7 +972,7 @@ MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1
             Dim Partition As AAL.PartPartition = kvp.Value
             Partition.Name = kvp.Key
             For Each part As AAL.Part In Partition.Parts
-                If frmMain.librarydata.PartList.ContainsKey(part.Number) Then
+                If frmMain.librarydata.PartList.ContainsKey(part.Number) And bRebuildParts = False Then
                     dicDuplicateParts.Item(part.Number) = frmMain.librarydata.PartList.Item(part.Number)
                     Continue For
                 End If

@@ -5,7 +5,35 @@ Imports System.Threading
 
 Public Class Symbols
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
+#Region "Private Fields"
+
+    Dim PrecisionUnit As Boolean = False
+
+    'Strings
+    Dim sNewString, sline, attFont, attFontSize, attFontColor As String
+
+#End Region
+
+#Region "Public Events"
+
+    Public Event eProcessComplete(ByVal Partition As String, ByVal Report As StringBuilder)
+
+    Public Event eReadComplete(ByVal Partition As String, ByVal UniqueSymAtts As Dictionary(Of String, AAL.SymbolProperty), ByVal Symbols As Dictionary(Of String, Object), ByVal SymPropswithTrailingSpaces As Dictionary(Of String, List(Of String)), ByVal UniquePinAtts As Dictionary(Of String, AAL.SymbolPinProperty), ByVal dic_NonCommonProperties As Dictionary(Of String, List(Of String)))
+
+    Public Event eReadPropertyValuesComplete(ByVal Partition As String, ByVal Symbols As Dictionary(Of String, ArrayList), ByVal PartitionProperties As ArrayList)
+
+    Public Event eUpdateCount(ByVal status As String)
+
+    'Events
+    Public Event RenameSymbolsComplete(ByVal Partition As String, ByVal DuplicateSymbols As List(Of String))
+
+    Public Event SymbolCount(ByVal iSymbolCount As Integer)
+
+    Public Event SymbolFinish()
+
+#End Region
+
+#Region "Public Properties"
 
     'Arraylist
     Property alSymExt As New ArrayList()
@@ -29,15 +57,6 @@ Public Class Symbols
 
     Property dicSymbolNames As New Dictionary(Of String, List(Of String))(StringComparer.OrdinalIgnoreCase)
     Property dicSymbolRename As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
-
-    Public Event eProcessComplete(ByVal Partition As String, ByVal Report As StringBuilder)
-
-    Public Event eReadComplete(ByVal Partition As String, ByVal UniqueSymAtts As Dictionary(Of String, AAL.SymbolProperty), ByVal Symbols As Dictionary(Of String, Object), ByVal SymPropswithTrailingSpaces As Dictionary(Of String, List(Of String)), ByVal UniquePinAtts As Dictionary(Of String, AAL.SymbolPinProperty), ByVal dic_NonCommonProperties As Dictionary(Of String, List(Of String)))
-
-    Public Event eReadPropertyValuesComplete(ByVal Partition As String, ByVal Symbols As Dictionary(Of String, ArrayList), ByVal PartitionProperties As ArrayList)
-
-    Public Event eUpdateCount(ByVal status As String)
-
     Property l_NewPinProperties As New List(Of AAL.SymbolPinProperty)
     Property l_NewProperties As New List(Of AAL.SymbolProperty)
     Property l_RemovePinProperties As New List(Of String)
@@ -52,31 +71,15 @@ Public Class Symbols
     'Object
     Property oDate As Date
 
-    'Events
-    Public Event RenameSymbolsComplete(ByVal Partition As String, ByVal DuplicateSymbols As List(Of String))
-
     Property ResetSymbolPins As Boolean = False
-
-    Public Event SymbolCount(ByVal iSymbolCount As Integer)
-
-    Public Event SymbolFinish()
-
-#End Region
-
-#Region "Private Fields + Properties + Events + Delegates + Enums"
-
-    Dim PrecisionUnit As Boolean = False
-    'Rename Symbol
-    'Rename Symbol
-    'From Purge Symbols
-
-    'Strings
-    Dim sNewString, sline, attFont, attFontSize, attFontColor As String
 
 #End Region
 
 #Region "Public Methods"
 
+    'Rename Symbol
+    'Rename Symbol
+    'From Purge Symbols
     Function changeCase(ByVal sSymDirectory)
         For Each fileOnDisk As String In My.Computer.FileSystem.GetFiles(sSymDirectory, FileIO.SearchOption.SearchAllSubDirectories)
             Dim ext As String = Path.GetExtension(fileOnDisk)
@@ -235,6 +238,38 @@ Public Class Symbols
                             Next
                             sb_ChangeReport.AppendLine(vbTab & vbTab & "End New Properties:")
                             bChangesMade = True
+                        End If
+
+                    ElseIf currentLine.StartsWith("T ") Then
+
+                        sb_Symbol.AppendLine(currentLine)
+                        currentLine = arFile.GetValue(currentlineCount + 1)
+
+                        If currentLine.StartsWith("Q ") Then
+                            currentlineCount += 1
+                            currentLine = arFile.GetValue(currentlineCount + 1)
+                            If currentLine.StartsWith("|FNTSTL ") Then
+                                currentlineCount += 1
+                                If AutomaticText = True Then
+                                    Dim slineFNTSTL As String() = Split(currentLine, " ")
+
+                                    slineFNTSTL(1) = -1
+
+                                    currentLine = String.Join(" ", slineFNTSTL)
+                                    sb_Symbol.AppendLine(currentLine)
+                                End If
+                            End If
+                        ElseIf currentLine.StartsWith("|FNTSTL ") Then
+                            currentlineCount += 1
+
+                            If AutomaticText = True Then
+                                Dim slineFNTSTL As String() = Split(currentLine, " ")
+
+                                slineFNTSTL(1) = -1
+
+                                currentLine = String.Join(" ", slineFNTSTL)
+                                sb_Symbol.AppendLine(currentLine)
+                            End If
                         End If
 
                     ElseIf currentLine.StartsWith("U ") Then
@@ -451,6 +486,27 @@ Public Class Symbols
 
                         sb_Symbol.AppendLine(currentLine)
 
+                        Dim nextLine As String = arFile.GetValue(currentlineCount + 1)
+
+                        Do Until (Not nextLine.StartsWith("+") And Not nextLine.StartsWith(" ") And Not Regex.IsMatch(nextLine, "^\s"))
+
+                            currentlineCount += 1
+
+                            sb_Symbol.AppendLine(nextLine.TrimEnd)
+
+                            'If nextLine.StartsWith("+") Then
+                            '    nextLine = nextLine.Replace("+", String.Empty)
+                            'Else
+                            '    nextLine = Regex.Replace(nextLine.Trim(), "\s", " ")
+                            'End If
+
+                            'currentLine = currentLine & " " & nextLine.Trim()
+
+                            nextLine = arFile.GetValue(currentlineCount + 1)
+                            currentLine = arFile.GetValue(currentlineCount + 1)
+
+                        Loop
+
                         currentLine = arFile.GetValue(currentlineCount + 1)
 
                         If currentLine.StartsWith("Q ") Then
@@ -461,11 +517,10 @@ Public Class Symbols
                             currentLine = arFile.GetValue(currentlineCount + 1)
                         End If
 
-                        If currentLine.StartsWith("|GRPHSTL ") Then
+                        If currentLine.StartsWith("|GRPHSTL") Then
                             currentlineCount += 1
-                            Dim linesplit As String()
 
-                            linesplit = Regex.Split(currentLine, "\s+")
+                            Dim linesplit As String() = Regex.Split(currentLine, "\s+")
 
                             linesplit(1) = -1
 

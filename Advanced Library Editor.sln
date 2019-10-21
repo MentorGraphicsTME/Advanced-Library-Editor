@@ -1,16 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.136
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "xAdvanced Library Editor", "xAdvanced Library Editor.vbproj", "{5518C38F-E986-4A23-AB57-05BB830DAD86}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Advanced Library Editor", "Advanced Library Editor.vbproj", "{5518C38F-E986-4A23-AB57-05BB830DAD86}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7612B668-6714-43FA-AE77-99EE0E6D3414}"
 	ProjectSection(SolutionItems) = preProject
 		..\ALE\lib\xForms.dll = ..\ALE\lib\xForms.dll
 	EndProjectSection
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "xAdvanced Automation Layer", "..\..\Advanced Automation Layer\xAdvanced Automation Layer.vbproj", "{3D6651AA-E444-4643-B5EE-B5354D7B65A4}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Advanced Automation Layer", "..\..\Advanced Automation Layer\Advanced Automation Layer.vbproj", "{3D6651AA-E444-4643-B5EE-B5354D7B65A4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "About Screen", "..\..\..\C#\About Screen\About Screen.csproj", "{B376CDDD-B74B-4A4C-AAC9-0F1276CE42B0}"
 EndProject
@@ -79,7 +79,11 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		BuildVersion_AssemblyInfoFilename = My Project\AssemblyInfo.vb
+		BuildVersion_StartDate = 2000/1/1
+		BuildVersion_UpdateFileVersion = True
+		BuildVersion_UpdateAssemblyVersion = True
+		SolutionGuid = {54A1DCE7-D252-4955-B817-7DAC61A2327A}
 		BuildVersion_UseGlobalSettings = True
+		BuildVersion_AssemblyInfoFilename = My Project\AssemblyInfo.vb
 	EndGlobalSection
 EndGlobal

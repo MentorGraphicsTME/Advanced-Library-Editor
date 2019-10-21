@@ -2,7 +2,59 @@
 
 Public Class Heal_PDB
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
+#Region "Private Fields"
+
+    'Arraylist
+    Dim alCellPinNumbers As New ArrayList
+
+    Dim b_HealPart As Boolean = True
+    Dim bBuildSucces As Boolean
+    Dim bCommitPart As Boolean
+    Dim bSymbolRename As Boolean = False
+
+    'Boolean
+    Dim CancelNCPin, CopyPinMappingFailed As Boolean
+
+    'Dim l_CellName As New List(Of String)
+    Dim l_AlternateSymbolReferences As New List(Of MGCPCBPartsEditor.SymbolReference)
+
+    'List
+    Dim l_SymbolName As New List(Of String)
+
+    Dim nodePart As Xml.XmlNode
+    Dim origPartLabel, origPartName
+    Dim oWriteDiagnostics As New AAL.XMLMapping
+
+    'Integers
+    Dim partType As Integer
+
+    'Local Variables
+    Dim pedHealApp As New MGCPCBPartsEditor.PartsEditorDlg
+
+    'Strings
+    Dim sPartitionName As String
+
+    Dim symbol As LibraryManager.IMGCLMSymbol
+
+#End Region
+
+#Region "Public Events"
+
+    Event eUpdateCount()
+
+    'Events
+    Event eUpdateStatus(status As String)
+
+    Event LogError()
+
+    'Events
+    Event LogNote()
+
+    Event LogWarning()
+
+#End Region
+
+#Region "Public Properties"
 
     Property bAddCells As Boolean
 
@@ -43,22 +95,9 @@ Public Class Heal_PDB
     Property dicRenameCells As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
 
     Property dicRenameSymbols As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
-
-    Event eUpdateCount()
-
-    'Events
-    Event eUpdateStatus(status As String)
-
     Property HealLog As New HealInfo
 
     Property LibraryData As Data
-
-    Event LogError()
-
-    'Events
-    Event LogNote()
-
-    Event LogWarning()
 
     'Objects
     Property oResults As Object
@@ -76,47 +115,6 @@ Public Class Heal_PDB
     Property Verbose As Boolean = False
 
     Property xmlDiagnosticsDoc As Xml.XmlDocument
-
-#End Region
-
-#Region "Private Fields + Properties + Events + Delegates + Enums"
-
-    'Arraylist
-    Dim alCellPinNumbers As New ArrayList
-
-    Dim b_HealPart As Boolean = True
-
-    Dim bBuildSucces As Boolean
-
-    Dim bCommitPart As Boolean
-
-    Dim bSymbolRename As Boolean = False
-
-    'Boolean
-    Dim CancelNCPin, CopyPinMappingFailed As Boolean
-
-    'Dim l_CellName As New List(Of String)
-    Dim l_AlternateSymbolReferences As New List(Of MGCPCBPartsEditor.SymbolReference)
-
-    'List
-    Dim l_SymbolName As New List(Of String)
-
-    Dim nodePart As Xml.XmlNode
-
-    Dim origPartLabel, origPartName
-
-    Dim oWriteDiagnostics As New AAL.XMLMapping
-
-    'Integers
-    Dim partType As Integer
-
-    'Local Variables
-    Dim pedHealApp As New MGCPCBPartsEditor.PartsEditorDlg
-
-    'Strings
-    Dim sPartitionName As String
-
-    Dim symbol As LibraryManager.IMGCLMSymbol
 
 #End Region
 
@@ -763,9 +761,9 @@ Public Class Heal_PDB
             End Using
         End If
 
-        For Each pinDef As MGCPCBPartsEditor.PinDefinition In gate.PinDefinitions
+        For Each pdbPin As MGCPCBPartsEditor.PinDefinition In gate.PinDefinitions
 
-            Dim SwapIdentifier As String = pinDef.SwapIdentifier
+            Dim SwapIdentifier As String = pdbPin.SwapIdentifier
             SwapIdentifier = SwapIdentifier.Replace("\", "_")
             SwapIdentifier = SwapIdentifier.Replace("/", "_")
             SwapIdentifier = SwapIdentifier.Replace(",", "_")
@@ -777,11 +775,11 @@ Public Class Heal_PDB
 
             If Verbose = True Then
                 Using writer As StreamWriter = New StreamWriter(LibraryData.LogPath & "\Debug - Heal PDB.log", True)
-                    writer.WriteLine(vbTab & vbTab & vbTab & "Index: " & pinDef.Index & ", Swap Identifier: " & SwapIdentifier & ", Type: " & pinDef.PinValueType)
+                    writer.WriteLine(vbTab & vbTab & vbTab & "Index: " & pdbPin.Index & ", Swap Identifier: " & SwapIdentifier & ", Type: " & pdbPin.PinValueType)
                 End Using
             End If
 
-            newGate.PutPinDefinition(pinDef.Index, SwapIdentifier, pinDef.PinPropertyType, pinDef.PinValueType)
+            newGate.PutPinDefinition(pdbPin.Index, SwapIdentifier, pdbPin.PinPropertyType, pdbPin.PinValueType)
 
         Next
 
@@ -953,22 +951,22 @@ Public Class Heal_PDB
 
     Function CopyPins(ByRef destSlot As MGCPCBPartsEditor.Slot, ByVal sourceSlot As MGCPCBPartsEditor.Slot)
 
-        For Each pin As MGCPCBPartsEditor.IMGCPDBPin In sourceSlot.Pins
+        For Each pdbPin As MGCPCBPartsEditor.IMGCPDBPin In sourceSlot.Pins
             If Verbose = True Then
                 Using writer As StreamWriter = New StreamWriter(LibraryData.LogPath & "\Debug - Heal PDB.log", True)
-                    writer.WriteLine(vbTab & vbTab & "Number: " & pin.Number & ", Name: " & pin.Name & ", Index: " & pin.Index)
+                    writer.WriteLine(vbTab & vbTab & "Number: " & pdbPin.Number & ", Name: " & pdbPin.Name & ", Index: " & pdbPin.Index)
                 End Using
             End If
 
             If (bAddNCPins = True) And (CancelNCPin = False) Then
 
-                destSlot.PutPin(pin.Index, pin.Number, pin.Name)
+                destSlot.PutPin(pdbPin.Index, pdbPin.Number, pdbPin.Name)
 
-                If alCellPinNumbers.Contains(pin.Number) Then
-                    alCellPinNumbers.Remove(pin.Number)
+                If alCellPinNumbers.Contains(pdbPin.Number) Then
+                    alCellPinNumbers.Remove(pdbPin.Number)
                 End If
             Else
-                destSlot.PutPin(pin.Index, pin.Number, pin.Name)
+                destSlot.PutPin(pdbPin.Index, pdbPin.Number, pdbPin.Name)
             End If
 
         Next
@@ -980,21 +978,21 @@ Public Class Heal_PDB
     Function CopyProperties(ByRef pdbNewPart As MGCPCBPartsEditor.Part, ByVal pdbPart As MGCPCBPartsEditor.Part, ByRef oLogInfo As Log, ByRef oPart As AAL.Part)
 
         If pdbPart.Properties.Count > 0 Then
-            For Each prop As MGCPCBPartsEditor.Property In pdbPart.Properties
+            For Each pdbProp As MGCPCBPartsEditor.Property In pdbPart.Properties
                 Try
                     Dim propName As String
-                    propName = prop.Name
+                    propName = pdbProp.Name
 
                     Dim propValue As String
-                    propValue = prop.Value
+                    propValue = pdbProp.Value
 
-                    oPart.Properties.Add(prop.Name, prop.Value)
+                    oPart.Properties.Add(pdbProp.Name, pdbProp.Value)
 
                     Dim propType
-                    propType = prop.Type
+                    propType = pdbProp.Type
 
                     Dim propObj, propValueString
-                    propValueString = prop.GetValueString
+                    propValueString = pdbProp.GetValueString
 
                     propObj = Nothing
                     Try
@@ -1281,26 +1279,26 @@ Public Class Heal_PDB
                             For Each oSlot As AAL.Slot In l_TempSlots
                                 If oSymbol.Slots.Count = 1 Then
                                     Dim pdbSlot As MGCPCBPartsEditor.Slot = pdbNewPart.PinMapping.PutSlot(pdbNewPart.PinMapping.Gates.Item(1), pdbSymRef)
-                                    For Each oPin As AAL.SymbolPin In oSlot.SymbolPins.Values
+                                    For Each aalPin As AAL.SymbolPin In oSlot.SymbolPins.Values
                                         Dim i_Index As Integer = 0
-                                        If dicSlotPins.ContainsKey(oPin.Number) Then
-                                            i_Index = dicSlotPins.Item(oPin.Number)
-                                            pdbSlot.PutPin(i_Index, oPin.Number, oPin.Name)
+                                        If dicSlotPins.ContainsKey(aalPin.Number) Then
+                                            i_Index = dicSlotPins.Item(aalPin.Number)
+                                            pdbSlot.PutPin(i_Index, aalPin.Number, aalPin.Name)
                                         End If
                                     Next
                                 Else
                                     Dim l_SlotPinsTemp As New List(Of String)(dicSlotPins.Keys)
-                                    For Each oPin As AAL.SymbolPin In oSlot.SymbolPins.Values
-                                        If l_SlotPinsTemp.Contains(oPin.Number) Then l_SlotPinsTemp.Remove(oPin.Number)
+                                    For Each aalPin As AAL.SymbolPin In oSlot.SymbolPins.Values
+                                        If l_SlotPinsTemp.Contains(aalPin.Number) Then l_SlotPinsTemp.Remove(aalPin.Number)
                                     Next
 
                                     If l_SlotPinsTemp.Count = 0 Then
                                         Dim pdbSlot As MGCPCBPartsEditor.Slot = pdbNewPart.PinMapping.PutSlot(pdbNewPart.PinMapping.Gates.Item(1), pdbSymRef)
-                                        For Each oPin As AAL.SymbolPin In oSlot.SymbolPins.Values
+                                        For Each aalPin As AAL.SymbolPin In oSlot.SymbolPins.Values
                                             Dim i_Index As Integer = 0
-                                            If dicSlotPins.ContainsKey(oPin.Number) Then
-                                                i_Index = dicSlotPins.Item(oPin.Number)
-                                                pdbSlot.PutPin(i_Index, oPin.Number, oPin.Name)
+                                            If dicSlotPins.ContainsKey(aalPin.Number) Then
+                                                i_Index = dicSlotPins.Item(aalPin.Number)
+                                                pdbSlot.PutPin(i_Index, aalPin.Number, aalPin.Name)
                                             End If
                                         Next
                                         l_TempSlots.Remove(oSlot)
@@ -1789,7 +1787,17 @@ End Class
 
 Public Class HealInfo
 
-#Region "Fields + Properties + Events + Delegates + Enums"
+#Region "Private Fields"
+
+    Dim _Failed As Integer = 0
+
+    Dim _Log As New Dictionary(Of String, Log)
+
+    Dim _Success As Integer = 0
+
+#End Region
+
+#Region "Properties"
 
     Property Failed() As Integer
         Get
@@ -1817,14 +1825,6 @@ Public Class HealInfo
             _Success = value
         End Set
     End Property
-
-#End Region
-
-#Region "Private Fields + Properties + Events + Delegates + Enums"
-
-    Dim _Failed As Integer = 0
-    Dim _Log As New Dictionary(Of String, Log)
-    Dim _Success As Integer = 0
 
 #End Region
 

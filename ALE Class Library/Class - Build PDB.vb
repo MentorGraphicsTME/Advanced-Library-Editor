@@ -253,7 +253,9 @@ Public Class Build_PDB
         End If
 
         'Label
-        If IsNothing(PartLabel) Then
+        If Not IsNothing(aalPart.Label) Then
+            pdbPart.Label = aalPart.Label
+        ElseIf IsNothing(PartLabel) Then
             pdbPart.Label = aalPart.Number
         Else
             pdbPart.Label = PartLabel
@@ -364,7 +366,11 @@ Public Class Build_PDB
             Next
 
             Try
-                oProperty = pdbPart.PutPropertyEx("Height", aalPart.Height)
+                If Not IsNothing(aalPart.Unit) Then
+                    oProperty = pdbPart.PutPropertyEx("Height", aalPart.Height, aalPart.Unit)
+                Else
+                    oProperty = pdbPart.PutPropertyEx("Height", aalPart.Height)
+                End If
             Catch ex As Exception
                 Log(LogType.Warning, "[Build PDB Error] Cannot add property: ""Height"", with value: " & aalPart.Height)
             End Try
@@ -375,7 +381,11 @@ Public Class Build_PDB
             End If
 
             Try
-                oProperty = pdbPart.PutPropertyEx("Height", aalPart.Height)
+                If Not IsNothing(aalPart.Unit) Then
+                    oProperty = pdbPart.PutPropertyEx("Height", aalPart.Height, aalPart.Unit)
+                Else
+                    oProperty = pdbPart.PutPropertyEx("Height", aalPart.Height)
+                End If
             Catch ex As Exception
                 Log(LogType.Warning, "[Build PDB Error] Cannot add property: ""Height"", with value: " & aalPart.Height)
             End Try
@@ -400,6 +410,18 @@ Public Class Build_PDB
             'If Not IsNothing(xmlDebug) Then
             '    xmlDebug.DocumentElement.RemoveChild(nodePart)
             'End If
+
+            If (aalPart.MissingCells.Count > 0) Then
+                For Each cell As String In aalPart.MissingCells
+                    Log(LogType.Warning, "[Invalid Input] Cell: " & cell & " was not found.")
+                Next
+            End If
+
+            If (aalPart.MissingSymbols.Count > 0) Then
+                For Each symbol As String In aalPart.MissingSymbols
+                    Log(LogType.Warning, "[Invalid Input] Symbol: " & symbol & " was not found.")
+                Next
+            End If
 
             Return True
         Else
@@ -774,6 +796,13 @@ Public Class Build_PDB
                     Return False
                 End Try
             Else
+
+                If (aalPart.MissingCells.Count > 0) Then
+                    For Each cell As String In aalPart.MissingCells
+                        Log(LogType.Warning, "[Invalid Input] Cell: " & cell & " was not found.")
+                    Next
+                End If
+
                 Log(LogType.Err, "[Build PDB Error] Could not add cells to PDB.")
                 Return False
             End If
@@ -1596,11 +1625,11 @@ BuildGateInit:
                         End If
                     ElseIf alTempCellPinNumbers.Count = 0 Then
                         Log(LogType.Warning, "[Invalid Input] Removing cell " & sTopCell & " because it has no pins.")
-                        pdbCellReference.Delete()
+                        pdbPart.PinMapping.CellReferences().Item(sTopCell).Delete()
                     Else
                         Log(LogType.Err, "[Invalid Input] Multiple cells are referenced but their pin counts do not match. Top cell, " & sTopCell & ", contains " & _CellPinNumbers.Count() &
                             " pins. Alternate cell, " & pdbCellReference.Name & ", contains " & alTempCellPinNumbers.Count & " pins.")
-                        Return False
+                        pdbCellReference.Delete()
                     End If
                 Else
 
@@ -1639,7 +1668,7 @@ BuildGateInit:
                     Else
                         Log(LogType.Err, " [Invalid Input] Multiple cells are referenced but their pin counts do not match. Top cell, " & sTopCell & ", contains " & _CellPinNumbers.Count() &
                             " pins. Alternate cell, " & pdbCellReference.Name & ", contains " & alTempCellPinNumbers.Count & " pins.")
-                        Return False
+                        pdbCellReference.Delete()
                     End If
                 Else
                     Dim tempPins As New ArrayList()
@@ -1677,7 +1706,8 @@ BuildGateInit:
                     Else
                         Log(LogType.Err, "[Invalid Input] Multiple cells are referenced but their pin counts do not match. Top cell, " & sTopCell & ", contains " & _CellPinNumbers.Count() &
                             " pins. Alternate cell, " & pdbCellReference.Name & ", contains " & alTempCellPinNumbers.Count & " pins.")
-                        Return False
+                        pdbCellReference.Delete()
+                        Continue For
                     End If
                 Else
                     Dim tempPins As New ArrayList()
@@ -1690,6 +1720,10 @@ BuildGateInit:
                 Return False
             End Try
         Next
+
+        If (pdbPart.PinMapping.CellReferences.Count = 0) Then
+            Return False
+        End If
 
         If pdbPart.PinMapping.CellReferences.Count = 0 Then
             Return False
@@ -1716,6 +1750,12 @@ BuildGateInit:
                     Return False
                 End Try
             Else
+
+                If (aalPart.MissingCells.Count > 0) Then
+                    For Each cell As String In aalPart.MissingCells
+                        Log(LogType.Warning, "[Invalid Input] Cell: " & cell & " was not found.")
+                    Next
+                End If
                 Return False
             End If
         End If

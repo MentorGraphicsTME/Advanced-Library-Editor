@@ -5,7 +5,29 @@ Imports Microsoft.Win32
 
 Public Class ProjectRead
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
+#Region "Public Fields"
+
+    Public dxdApp As ViewDraw.Application
+    Public expApp As MGCPCB.Application
+    Public expDoc, expOpenDoc As MGCPCB.Document
+
+#End Region
+
+#Region "Private Fields"
+
+    Dim dxdDoc
+
+#End Region
+
+#Region "Public Events"
+
+    Public Event eFinished()
+
+    Public Event reUpdateStatus(status As String)
+
+#End Region
+
+#Region "Public Properties"
 
     Property buildPinMapping As Boolean = False
     Property closeDxD As Boolean = False
@@ -21,11 +43,6 @@ Public Class ProjectRead
     Property dicDxDRefDes As New Dictionary(Of String, List(Of String))
     Property dicExpPartData As New Dictionary(Of String, List(Of AAL.Cell))
     Property dicExpRefDesCellData As New Dictionary(Of String, Object)
-
-    Public Event eFinished()
-
-    Public Event reUpdateStatus(status As String)
-
     Property sDxDPath As String
 
     'Part Number -> List of Reference Designators
@@ -33,15 +50,6 @@ Public Class ProjectRead
 
     Property sLogPath As String
     Property success As Boolean = True
-    Public dxdApp As ViewDraw.Application
-    Public expApp As MGCPCB.Application
-    Public expDoc, expOpenDoc As MGCPCB.Document
-
-#End Region
-
-#Region "Private Fields + Properties + Events + Delegates + Enums"
-
-    Dim dxdDoc
 
 #End Region
 
@@ -60,7 +68,9 @@ Public Class ProjectRead
             expDoc.Close()
         Catch ex As Exception
         Finally
+            expDoc = Nothing
             expApp.Quit()
+            expApp = Nothing
         End Try
 
     End Sub

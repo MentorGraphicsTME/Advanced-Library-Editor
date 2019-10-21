@@ -10,13 +10,40 @@ Imports System.Runtime.InteropServices
 
 Public Class frmMain
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
+#Region "Private Fields"
 
-    Property b_PopulateMenus As Boolean = True
+    Dim bHealPDB As Boolean = False
+    Dim dicLogFiles As New Dictionary(Of String, String)
+    Dim i_CellCount As Integer = 0
 
-    Shared Property bConnectToLMC As Boolean = False
+    'Integer
+    Dim i_PartCount As Integer = 0
+
+    Dim i_PartsLeftToHeal As Integer = 0
+    Dim i_SymbolCount As Integer = 0
+
+    'Objects
+    Dim ini As IniFile
+
+    Dim s_PreviousStatus As String
+    Dim sublock As New Object
+    Dim symbol As LibraryManager.MGCLMSymbol
+
+    'Threads
+    Dim tReadPDB, tReadSymbols, tReadCells, tReadPadstacks As Thread
+
+    Dim tsm_ReadPDBtoNeut As New ToolStripMenuItem
+    Dim VxVersion As String
+
+    Dim xmlPDBExport As New XmlDocument
+
+#End Region
+
+#Region "Public Delegates"
 
     Delegate Sub d_CellCount()
+
+    Delegate Sub d_ExportPDBMXML()
 
     'Delegates
     Delegate Sub d_OpenComplete()
@@ -51,12 +78,11 @@ Public Class frmMain
 
     Delegate Sub d_UpdateStatus(ByVal status As String)
 
-    'Dictionary
-    Property dicLMCHistory As New Dictionary(Of String, String)
+#End Region
 
-    Property dicPartPropertyReport As New SortedDictionary(Of String, StringBuilder)
+#Region "Public Events"
 
-    Property dicSymPropertyReport As New SortedDictionary(Of String, StringBuilder)
+    Event eExportPDBXMLComplete()
 
     Event eExportSymbolNamesComplete()
 
@@ -76,9 +102,21 @@ Public Class frmMain
     'Event eOpenComplete()
     Event eUpdateStatus(status As String)
 
-    Shared Property libApp As LibraryManager.LibraryManagerApp
+#End Region
 
-    Shared Property libDoc As LibraryManager.IMGCLMLibrary
+#Region "Public Properties"
+
+    Property b_PopulateMenus As Boolean = True
+
+    Shared Property bConnectToLMC As Boolean = False
+
+    'Dictionary
+    Property dicLMCHistory As New Dictionary(Of String, String)
+
+    Property dicPartPropertyReport As New SortedDictionary(Of String, StringBuilder)
+
+    Property dicSymPropertyReport As New SortedDictionary(Of String, StringBuilder)
+    Shared Property libApp As LibraryManager.LibraryManagerApp
 
     Shared Property librarydata As New Data
 
@@ -101,33 +139,8 @@ Public Class frmMain
     Property tsm_Other As New ToolStripMenuItem
     Property tsm_PDB As New ToolStripMenuItem
     Property tsm_Symbol As New ToolStripMenuItem
-
-#End Region
-
-#Region "Private Fields + Properties + Events + Delegates + Enums"
-
-    Dim bHealPDB As Boolean = False
-    Dim dicLogFiles As New Dictionary(Of String, String)
-    Dim i_CellCount As Integer = 0
-
-    'Integer
-    Dim i_PartCount As Integer = 0
-
-    Dim i_PartsLeftToHeal As Integer = 0
-    Dim i_SymbolCount As Integer = 0
-
-    'Objects
-    Dim ini As IniFile
-
-    Dim s_PreviousStatus As String
-    Dim sublock As New Object
-    Dim symbol As LibraryManager.MGCLMSymbol
-
-    'Threads
-    Dim tReadPDB, tReadSymbols, tReadCells, tReadPadstacks As Thread
-
-    Dim tsm_ReadPDBtoNeut As New ToolStripMenuItem
-    Dim VxVersion As String
+    Public Property xmlLock As Object = New Object
+    Shared Property libDoc As LibraryManager.IMGCLMLibrary
 
 #End Region
 
@@ -234,7 +247,13 @@ Public Class frmMain
 
             Next
 
-            Dim arPDBTypeTablecafFile As String() = File.ReadAllLines(strSDD_HOME & "\standard\config\pcb\default\PDBTypeTable.caf")
+            Dim TypeTable As String = strSDD_HOME & "\standard\config\pcb\default\PDBTypeTable.caf"
+
+            If Not File.Exists(TypeTable) Then
+                TypeTable = strSDD_HOME & "\standard\config\pcb\PDBTypeTable.caf"
+            End If
+
+            Dim arPDBTypeTablecafFile As String() = File.ReadAllLines(TypeTable)
 
             For Each line In arPDBTypeTablecafFile
 
@@ -254,7 +273,29 @@ Public Class frmMain
 
             RaiseEvent ePopluateHistory(librarydata.LibPath)
 
-            librarydata.LogPath = libDoc.Path & "Logfiles\ALE\"
+            Dim SDD_ALE_LogPath As String = System.Environment.GetEnvironmentVariable("SDD_ALE_LogFiles", EnvironmentVariableTarget.Machine)
+
+            If (SDD_ALE_LogPath = "") Then
+                SDD_ALE_LogPath = System.Environment.GetEnvironmentVariable("SDD_ALE_LogFiles", EnvironmentVariableTarget.User)
+            End If
+
+            If SDD_ALE_LogPath = "" Then
+                librarydata.LogPath = libDoc.Path & "Logfiles\ALE\"
+            Else
+
+                If SDD_ALE_LogPath.EndsWith("\") Then
+                    If (Not Directory.Exists(SDD_ALE_LogPath & libDoc.Name)) Then
+                        Directory.CreateDirectory(SDD_ALE_LogPath & libDoc.Name)
+                    End If
+
+                    librarydata.LogPath = SDD_ALE_LogPath & libDoc.Name & "\"
+                Else
+                    If (Not Directory.Exists(SDD_ALE_LogPath & "\" & libDoc.Name)) Then
+                        Directory.CreateDirectory(SDD_ALE_LogPath & "\" & libDoc.Name)
+                    End If
+                    librarydata.LogPath = SDD_ALE_LogPath & "\" & libDoc.Name & "\"
+                End If
+            End If
 
             If Not Directory.Exists(librarydata.LogPath) Then
                 Directory.CreateDirectory(librarydata.LogPath)
@@ -501,6 +542,11 @@ Public Class frmMain
 
     End Sub
 
+    Private Sub BatchPropertyClick(sender As Object, e As EventArgs)
+        frmBatch_PDB_Properties.MdiParent = Me
+        frmBatch_PDB_Properties.Show()
+    End Sub
+
     Private Sub BuildBGAClick(ByVal sender As Object, ByVal e As EventArgs)
 
         MessageBox.Show("BGA Builder has been retired in favor of the following script: " & Environment.NewLine & Environment.NewLine & "http://communities.mentor.com/mgcx/docs/DOC-3579")
@@ -676,6 +722,89 @@ Public Class frmMain
         frmExportCellInfo.Show()
     End Sub
 
+    Private Sub ExportPDBtoXML()
+        Dim newThreads(libDoc.Partitions(LibraryManager.MGCLMObjectType.kPART).Count) As Thread
+        Dim i As Integer = 0
+        Dim pedApp As New MGCPCBPartsEditor.PartsEditorDlg
+        Dim pedDoc As MGCPCBPartsEditor.PartsDB
+
+        pedApp = libDoc.PartEditor
+        pedDoc = pedApp.ActiveDatabaseEx
+
+        xmlPDBExport = New Xml.XmlDocument
+
+        Dim xmlSettings As New Xml.XmlWriterSettings
+        xmlSettings.Indent = True
+        xmlSettings.IndentChars = vbTab
+        xmlSettings.NewLineChars = vbNewLine
+        xmlSettings.NewLineHandling = Xml.NewLineHandling.Replace
+
+        If Not File.Exists(frmMain.librarydata.LogPath & "\XML PDB Mapping.xml") Then
+            Using writer As Xml.XmlWriter = Xml.XmlWriter.Create(frmMain.librarydata.LogPath & "\XML PDB Mapping.xml", xmlSettings)
+                writer.WriteStartDocument()
+                writer.WriteStartElement("Mapping")
+                writer.WriteEndElement()
+                writer.WriteEndDocument()
+            End Using
+        End If
+
+        xmlPDBExport.Load(frmMain.librarydata.LogPath & "\XML PDB Mapping.xml")
+
+        For Each Partition As MGCPCBPartsEditor.Partition In pedDoc.Partitions
+            Dim ReadPart As New LibraryRead
+            AddHandler ReadPart.eReturnPDBXML, AddressOf ExportPDBXML
+            ReadPart.libDoc = libDoc
+            ReadPart.xmlDoc = xmlPDBExport
+            newThreads(i) = New Thread(AddressOf ReadPart.exportPDBtoXML)
+            newThreads(i).IsBackground = True
+            newThreads(i).Start(Partition)
+            i += 1
+        Next
+
+        For i = 0 To pedDoc.Partitions.Count - 1
+            newThreads(i).Join()
+        Next
+
+        pedDoc = Nothing
+        pedApp.Quit()
+        pedApp = Nothing
+
+        xmlPDBExport.Save(frmMain.librarydata.LogPath & "\XML PDB Mapping.xml")
+
+        RaiseEvent eExportPDBXMLComplete()
+    End Sub
+
+    Private Sub ExportPDBXML(PDBXML As XmlDocument, PDB As String)
+
+        SyncLock xmlLock
+            For Each nodePart As Xml.XmlNode In PDBXML.DocumentElement.ChildNodes()
+                xmlPDBExport.DocumentElement.AppendChild(nodePart.Clone)
+            Next
+            xmlPDBExport.Save(frmMain.librarydata.LogPath & "\XML PDB Mapping.xml")
+            RaiseEvent eUpdateStatus(PDB & " exported.")
+        End SyncLock
+
+    End Sub
+
+    Private Sub ExportPDBXML_Complete()
+        If Me.InvokeRequired Then
+
+            Dim d As New d_ExportPDBMXML(AddressOf ExportPDBXML_Complete)
+            Me.Invoke(d)
+        Else
+            Dim reply As DialogResult = MessageBox.Show("PDB XML export process is complete." & Environment.NewLine & Environment.NewLine & "Would you like to view the results?", "Complete",
+    MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1)
+
+            If reply = DialogResult.Yes Then
+                OpenLogFile("XML PDB Mapping")
+            Else
+
+                MessageBox.Show("For more information, please see:" & Environment.NewLine & librarydata.LogPath & "XML PDB Mapping.xml")
+
+            End If
+        End If
+    End Sub
+
     Private Sub ExportSymNameClick(ByVal sender As Object, ByVal e As EventArgs)
 
         ts_Status.Text = "Exporting symbol names to excel."
@@ -811,6 +940,11 @@ Public Class frmMain
         frmHealPDBfromExcel.MdiParent = Me
         frmHealPDBfromExcel.Show()
 
+    End Sub
+
+    Private Sub ImplicitPinsClick(sender As Object, e As EventArgs)
+        frmCheckImplicitPins.MdiParent = Me
+        frmCheckImplicitPins.Show()
     End Sub
 
     Private Sub Main_Close(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.FormClosing
@@ -962,10 +1096,10 @@ Public Class frmMain
         frmModifyCellAtts.Show()
     End Sub
 
-    Private Sub ModifyPartPropertiesClick()
-        frmModifyPartDes.MdiParent = Me
-        frmModifyPartDes.Show()
-    End Sub
+    'Private Sub ModifyPartPropertiesClick()
+    '    frmModifyPartDes.MdiParent = Me
+    '    frmModifyPartDes.Show()
+    'End Sub
 
     Private Sub ModifyUserPropertiesClick(sender As Object, e As EventArgs)
         frmModifyUserLayers.MdiParent = Me
@@ -2237,6 +2371,7 @@ Public Class frmMain
                 Dim mPartProperties As New ToolStripMenuItem
                 Dim mSwapCells As New ToolStripMenuItem
                 Dim mModifyPartProperties As New ToolStripMenuItem
+                Dim mBatchPartProperty As New ToolStripMenuItem
                 Dim mAddPartProperty As New ToolStripMenuItem
                 Dim mModifyCellRefs As New ToolStripMenuItem
                 Dim mAddAlternateCell As New ToolStripMenuItem
@@ -2254,7 +2389,9 @@ Public Class frmMain
                 Dim mAddAltSymbols As New ToolStripMenuItem
                 Dim mReportPDBPropertiestoLog As New ToolStripMenuItem
                 Dim mReportPDBBOMCoverage As New ToolStripMenuItem
+                Dim mReportPDBtoXML As New ToolStripMenuItem
                 Dim mPruneParts As New ToolStripMenuItem
+                Dim mImplicitPins As New ToolStripMenuItem
 
                 mAddAlternateCell.Text = "Add Cell(s)"
                 tsm_PDB.DropDownItems.Add(mAddAlternateCell)
@@ -2306,13 +2443,19 @@ Public Class frmMain
                 mPartProperties.Text = "&Properties"
                 tsm_PDB.DropDownItems.Add(mPartProperties)
 
+                mBatchPartProperty.Text = "Batch Editor"
+                mPartProperties.DropDownItems.Add(mBatchPartProperty)
+                AddHandler mBatchPartProperty.Click, AddressOf BatchPropertyClick
+
+                mPartProperties.DropDownItems.Add(New ToolStripSeparator)
+
                 mAddPartProperty.Text = "Add New Property"
                 mPartProperties.DropDownItems.Add(mAddPartProperty)
                 AddHandler mAddPartProperty.Click, AddressOf TestClick
 
-                mModifyPartProperties.Text = "Modify Existing Property"
-                mPartProperties.DropDownItems.Add(mModifyPartProperties)
-                AddHandler mModifyPartProperties.Click, AddressOf ModifyPartPropertiesClick
+                'mModifyPartProperties.Text = "Modify Existing Property"
+                'mPartProperties.DropDownItems.Add(mModifyPartProperties)
+                'AddHandler mModifyPartProperties.Click, AddressOf ModifyPartPropertiesClick
 
                 mRemovePDBProps.Text = "Remove Properties"
                 mPartProperties.DropDownItems.Add(mRemovePDBProps)
@@ -2325,6 +2468,10 @@ Public Class frmMain
                 mSwapPN.Text = "&Rename Parts"
                 tsm_PDB.DropDownItems.Add(mSwapPN)
                 AddHandler mSwapPN.Click, AddressOf SwapPNClick
+
+                mImplicitPins.Text = "Report/Tag Implicit Pins"
+                tsm_PDB.DropDownItems.Add(mImplicitPins)
+                AddHandler mImplicitPins.Click, AddressOf ImplicitPinsClick
 
                 mSwapCells.Text = "Swap Cells"
                 tsm_PDB.DropDownItems.Add(mSwapCells)
@@ -2366,6 +2513,17 @@ Public Class frmMain
                 mReportPDBBOMCoverage.Text = "&BOM Coverage"
                 mReportPDB.DropDownItems.Add(mReportPDBBOMCoverage)
                 AddHandler mReportPDBBOMCoverage.Click, AddressOf ReportPDBBOMCoverageClick
+
+                Dim SDD_ALE_Profile As String = System.Environment.GetEnvironmentVariable("SDD_ALE_Profile", EnvironmentVariableTarget.Machine)
+                If (SDD_ALE_Profile = "") Then
+                    SDD_ALE_Profile = System.Environment.GetEnvironmentVariable("SDD_ALE_Profile", EnvironmentVariableTarget.User)
+                End If
+
+                If SDD_ALE_Profile = "Overlord" Then
+                    mReportPDBtoXML.Text = "&to XML"
+                    mReportPDB.DropDownItems.Add(mReportPDBtoXML)
+                    AddHandler mReportPDBtoXML.Click, AddressOf ReportPDBtoXML
+                End If
 
                 If librarydata.Type = Data.LibType.DC Then
                     mHealPDB.Enabled = False
@@ -2732,7 +2890,7 @@ Public Class frmMain
     End Sub
 
     Private Sub ReportPadstacktoLogClick()
-        Throw New NotImplementedException
+        Throw New Exception("Not implemented.")
     End Sub
 
     Private Sub ReportPDBBOMCoverageClick(ByVal sender As Object, ByVal e As EventArgs)
@@ -2994,6 +3152,19 @@ Public Class frmMain
         newThread.IsBackground = False
         newThread.Start()
 
+    End Sub
+
+    Private Sub ReportPDBtoXML(sender As Object, e As EventArgs)
+        ts_Status.Text = "Exporting PDB data to XML."
+
+        NotifyIcon.ShowBalloonTip(1000, "PDB Export:", "Parts to XML", ToolTipIcon.Info)
+
+        WaitGif.Enabled = True
+
+        Dim newThread As Thread
+        newThread = New Thread(AddressOf ExportPDBtoXML)
+        newThread.IsBackground = False
+        newThread.Start()
     End Sub
 
     Private Sub ReportSymbolPropertiestoLogClick(sender As Object, e As EventArgs)
@@ -3463,16 +3634,10 @@ Public Class IniFile
          ByVal lpFileName As String) _
     As Integer
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
-
-    Public Property Path As String
-
-#End Region
-
-#Region "Public Constructors + Destructors"
+#Region "Public Constructors"
 
     ''' <summary>
-    ''' IniFile Constructor 
+    ''' IniFile Constructor
     ''' </summary>
     ''' <param name="IniPath"> The path to the INI file. </param>
     Public Sub New(ByVal IniPath As String)
@@ -3481,10 +3646,16 @@ Public Class IniFile
 
 #End Region
 
+#Region "Public Properties"
+
+    Public Property Path As String
+
+#End Region
+
 #Region "Public Methods"
 
     ''' <summary>
-    ''' Read value from INI file 
+    ''' Read value from INI file
     ''' </summary>
     ''' <param name="section"> The section of the file to look in </param>
     ''' <param name="key">     The key in the section to look for </param>
@@ -3495,7 +3666,7 @@ Public Class IniFile
     End Function
 
     ''' <summary>
-    ''' Write value to INI file 
+    ''' Write value to INI file
     ''' </summary>
     ''' <param name="section"> The section of the file to write in </param>
     ''' <param name="key">     The key in the section to write </param>

@@ -53,6 +53,8 @@ Public Class frmDuplicatePart
     'Dictionary
     Dim dic_PNCopy As New Dictionary(Of String, Dictionary(Of String, AAL.Part))(StringComparer.OrdinalIgnoreCase)
 
+    Dim Height_Col As String
+
     'Integer
     Dim iDupPN As Integer = 0
 
@@ -128,6 +130,10 @@ Public Class frmDuplicatePart
                             aalPart.Label = xlsSheet.Range((Label_Col & index).ToString()).Value.ToString.Trim
                         End If
 
+                        If Not String.IsNullOrEmpty(Height_Col) Then
+                            aalPart.Properties("Height") = xlsSheet.Range((Height_Col & index).ToString()).Value.ToString.Trim()
+                        End If
+
                         If Not String.IsNullOrEmpty(Value_Col) Then
                             aalPart.Properties.Add("Value", xlsSheet.Range((Value_Col & index).ToString()).Value.ToString.Trim)
                             If bContainsSI Then
@@ -179,6 +185,10 @@ Public Class frmDuplicatePart
 
                     If Not String.IsNullOrEmpty(Label_Col) Then
                         aalPart.Label = xlsSheet.Range((Label_Col & index).ToString()).Value.ToString.Trim
+                    End If
+
+                    If Not String.IsNullOrEmpty(Height_Col) Then
+                        aalPart.Properties("Height") = xlsSheet.Range((Height_Col & index).ToString()).Value.ToString.Trim()
                     End If
 
                     If Not String.IsNullOrEmpty(Value_Col) Then
@@ -472,6 +482,11 @@ Public Class frmDuplicatePart
         btnClearDescription.Visible = False
     End Sub
 
+    Private Sub btnClearHeight_Click(sender As Object, e As EventArgs) Handles btnClearHeight.Click
+        cbox_Height.SelectedIndex = -1
+        btnClearHeight.Visible = False
+    End Sub
+
     Private Sub btnClearNew_Click(sender As Object, e As EventArgs) Handles btnClearNew.Click
         cbox_After.SelectedIndex = -1
         btnClearNew.Visible = False
@@ -516,6 +531,7 @@ Public Class frmDuplicatePart
         Value_Col = cbox_Value.Text
         Name_Col = cboxName.Text
         Label_Col = cboxLabel.Text
+        Height_Col = cbox_Height.Text
 
         bContainsSI = chkbox_SINotation.Checked
 
@@ -558,6 +574,10 @@ Public Class frmDuplicatePart
 
     Private Sub cbox_Description_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cbox_Description.SelectedIndexChanged
         btnClearDescription.Visible = True
+    End Sub
+
+    Private Sub cbox_Height_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cbox_Height.SelectedIndexChanged
+        btnClearHeight.Visible = True
     End Sub
 
     Private Sub cbox_Value_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cbox_Value.SelectedIndexChanged
@@ -668,7 +688,11 @@ Public Class frmDuplicatePart
                         End If
 
                         For Each prop As KeyValuePair(Of String, String) In aalPN.Properties
-                            pedPart.Properties.Remove(prop.Key)
+                            Try
+                                pedPart.Properties.Remove(prop.Key)
+                            Catch ex As Exception
+
+                            End Try
                             pedPart.PutPropertyEx(prop.Key, prop.Value, EPDBUnit.epdbUnitCurrent)
                         Next
 

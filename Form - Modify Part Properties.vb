@@ -193,7 +193,7 @@ Public Class frmModifyPartDes
 
             If sb_Report.Length > 0 Then
 
-                Dim replyCell As DialogResult = MessageBox.Show("Part property values have been modified. Would you like to view the results?", "Finished", _
+                Dim replyCell As DialogResult = MessageBox.Show("Part property values have been modified. Would you like to view the results?", "Finished",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1)
 
                 If replyCell = DialogResult.Yes Then
@@ -478,7 +478,6 @@ Public Class frmModifyPartDes
                     If xlsBook.Worksheets.Count = 1 Then
 
                         cboxActiveSheet.SelectedIndex = 0
-
                     Else
 
                         cboxActiveSheet.SelectedIndex = -1
@@ -529,7 +528,6 @@ Public Class frmModifyPartDes
 
             ts_Status.Text = "Reading Excel Spreadsheet..."
             t_Update = New Threading.Thread(AddressOf ReadWorkbook)
-
         Else
             ts_Status.Text = "Reading Text File..."
 
@@ -655,7 +653,6 @@ Public Class frmModifyPartDes
 
                 i += 1
                 Continue Do
-
             Else
                 sPN = xlsSheet.Range(PN_Col & i).Value
 
@@ -679,7 +676,6 @@ Public Class frmModifyPartDes
 
                 i += 1
                 Continue Do
-
             Else
 
                 Dim dicParts As Dictionary(Of String, String)
@@ -775,7 +771,7 @@ Public Class frmModifyPartDes
 
             If dicBadParts.Count > 0 Then
 
-                Dim replyCell As DialogResult = MessageBox.Show("File has been read, but " & dicBadParts.Keys.Count() & " parts might not be fully modified. Would you like to view the results?", "Finished", _
+                Dim replyCell As DialogResult = MessageBox.Show("File has been read, but " & dicBadParts.Keys.Count() & " parts might not be fully modified. Would you like to view the results?", "Finished",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1)
 
                 If replyCell = DialogResult.Yes Then

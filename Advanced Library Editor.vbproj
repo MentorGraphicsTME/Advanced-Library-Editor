@@ -97,7 +97,7 @@
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\x64\Debug\</OutputPath>
     <DocumentationFile>Advanced Library Editor.xml</DocumentationFile>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -112,6 +112,9 @@
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>My Project\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DictionaryTreeView">
@@ -167,6 +170,7 @@
     <Compile Include="ALE Class Library\Class - Modify Symbols.vb" />
     <Compile Include="ALE Class Library\Class - Read Central Library.vb" />
     <Compile Include="ALE Class Library\Class - Read Project.vb" />
+    <Compile Include="ALE Class Library\Class - Sort Column.vb" />
     <Compile Include="Class - Shared.vb" />
     <Compile Include="ALE Class Library\Class- Modify Cells.vb" />
     <Compile Include="Form - Add Alternate Cell.designer.vb">
@@ -286,9 +290,9 @@
     <Compile Include="Form - Modify Part Properties.designer.vb">
       <DependentUpon>Form - Modify Part Properties.vb</DependentUpon>
     </Compile>
-    <Compile Include="Form - Modify Part Properties.vb">
+    <None Include="Form - Modify Part Properties.vb">
       <SubType>Form</SubType>
-    </Compile>
+    </None>
     <Compile Include="Form - Modify Symbol Properties.designer.vb">
       <DependentUpon>Form - Modify Symbol Properties.vb</DependentUpon>
     </Compile>
@@ -329,6 +333,12 @@
       <DependentUpon>Form - Rename Symbols.vb</DependentUpon>
     </Compile>
     <Compile Include="Form - Rename Symbols.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form - Report Implicit Pins.designer.vb">
+      <DependentUpon>Form - Report Implicit Pins.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Form - Report Implicit Pins.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Form - Reset Symbols.designer.vb">
@@ -473,6 +483,9 @@
     <EmbeddedResource Include="Form - Rename Symbols.resx">
       <DependentUpon>Form - Rename Symbols.vb</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Form - Report Implicit Pins.resx">
+      <DependentUpon>Form - Report Implicit Pins.vb</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form - Reset Symbols.resx">
       <DependentUpon>Form - Reset Symbols.vb</DependentUpon>
     </EmbeddedResource>
@@ -500,6 +513,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="My Project\app.manifest">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>
@@ -538,7 +554,7 @@
   <ItemGroup>
     <COMReference Include="CellEditorAddinLib">
       <Guid>{2D222D3F-8750-49B3-9E37-BF88EDA7C756}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -547,7 +563,7 @@
     </COMReference>
     <COMReference Include="CommandBarSvr">
       <Guid>{A4D4B193-A01E-11D2-8F30-0060B0EF0A25}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -556,7 +572,7 @@
     </COMReference>
     <COMReference Include="KeyBindSvr">
       <Guid>{5B160184-B3F1-11D2-99AE-00A0C966477E}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -565,7 +581,7 @@
     </COMReference>
     <COMReference Include="LibraryManager">
       <Guid>{BD83B6B2-BE4F-42BF-B83E-F11B676B82B6}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -574,7 +590,7 @@
     </COMReference>
     <COMReference Include="LISTSERVERLib">
       <Guid>{15B15883-CD7B-11D2-8829-0060B0EF0A25}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -583,7 +599,7 @@
     </COMReference>
     <COMReference Include="MGCPCB">
       <Guid>{EDEDED00-D5F6-4B04-8FE7-EDEDEDEDED00}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -592,7 +608,7 @@
     </COMReference>
     <COMReference Include="MGCPCBPartsEditor">
       <Guid>{D434AC01-C1D4-4BDB-B994-8809BBE675CE}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -628,7 +644,7 @@
     </COMReference>
     <COMReference Include="PadstackEditorLib">
       <Guid>{571C4233-4E35-449E-A5C5-0CFCC217DA14}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -637,7 +653,7 @@
     </COMReference>
     <COMReference Include="SystemDesignLib">
       <Guid>{D0389BE2-689D-4CA7-BD13-E3C392747CEE}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -655,7 +671,7 @@
     </COMReference>
     <COMReference Include="ViewDraw">
       <Guid>{4ADEF4E1-690A-11CE-9261-0020C5E26659}</Guid>
-      <VersionMajor>60</VersionMajor>
+      <VersionMajor>83</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
       <WrapperTool>tlbimp</WrapperTool>
@@ -671,15 +687,15 @@
       <Project>{b376cddd-b74b-4a4c-aac9-0f1276ce42b0}</Project>
       <Name>About Screen</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Advanced Automation Layer\xAdvanced Automation Layer.vbproj">
+    <ProjectReference Include="..\..\Advanced Automation Layer\Advanced Automation Layer.vbproj">
       <Project>{3d6651aa-e444-4643-b5ee-b5354d7b65a4}</Project>
-      <Name>xAdvanced Automation Layer</Name>
+      <Name>Advanced Automation Layer</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_AssemblyInfoFilename="My Project\AssemblyInfo.vb" BuildVersion_UseGlobalSettings="True" />
+      <UserProperties BuildVersion_AssemblyInfoFilename="My Project\AssemblyInfo.vb" BuildVersion_UseGlobalSettings="True" BuildVersion_StartDate="2000/1/1" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>

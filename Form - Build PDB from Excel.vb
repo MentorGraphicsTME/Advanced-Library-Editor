@@ -11,18 +11,137 @@ Imports MGCPCBPartsEditor
 
 Public Class frmBuildFromExcel
 
-#Region "Public Fields + Properties + Events + Delegates + Enums"
+#Region "Private Fields"
 
-    Public Enum BuildPDBError
-        errDueToUnableToOpenPDBEditor = 0
-        errDueToUnableToFindFile = 1
-    End Enum
+    Dim ActiveThreads As Integer = 1
+
+    Private addLock As New Object
+
+    'Arraylist
+    Dim alPartPartitionList As New ArrayList()
+
+    'Boolean
+    Dim bCloseExcel As Boolean = False
+
+    Dim col_Cell As String
+
+    Dim col_Description As String
+
+    Dim col_Height As String
+
+    'String
+    Dim col_Partition As String
+
+    Dim col_PartLabel As String
+
+    Dim col_PartName As String
+
+    Dim col_PartNumber As String
+
+    Dim col_RefDes As String
+
+    Dim col_Symbol As String
+
+    'Dictionary
+    Dim dic_Height As New Dictionary(Of String, Double)
+
+    Dim dic_UnableToSave As New Dictionary(Of String, List(Of String))(StringComparer.OrdinalIgnoreCase)
+
+    'Dim dicBadData As New Dictionary(Of String, Dictionary(Of String, List(Of String)))(StringComparer.OrdinalIgnoreCase)
+    Dim dicBadPartitionData As New Dictionary(Of String, Dictionary(Of String, AAL.Part))(StringComparer.OrdinalIgnoreCase)
+
+    Dim dicBadParts As New Dictionary(Of String, Dictionary(Of String, List(Of String)))(StringComparer.OrdinalIgnoreCase)
+
+    Dim dicDuplicateParts As New Dictionary(Of String, List(Of String))(StringComparer.OrdinalIgnoreCase)
+
+    Dim dicExceptionParts As New Dictionary(Of String, Integer)
+
+    'UserInput
+    Dim dicInputData As New Dictionary(Of String, Dictionary(Of String, String()))
+
+    Dim dicLogReport As New Dictionary(Of String, ArrayList)
+
+    Dim dicMappingData As New SortedDictionary(Of String, Dictionary(Of String, AAL.Part))(StringComparer.OrdinalIgnoreCase)
+
+    Dim dicModifiedParts As New Dictionary(Of String, Dictionary(Of String, List(Of String)))(StringComparer.OrdinalIgnoreCase)
+
+    'Dictionary
+    Dim dicPartitionData As New Dictionary(Of String, AAL.PartPartition)(StringComparer.OrdinalIgnoreCase)
+
+    Dim dicSpreadsheetPartCount As New Dictionary(Of String, Integer)
+
+    Dim dicSuccessfulByPartition As New Dictionary(Of String, List(Of String))
+
+    Private errLock As New Object
+
+    Dim errStack As Stack(Of AAL.Part)
+
+    Private getPartInfoLock As New Object
+
+    'Integers
+    Dim iBadPartsFromExcel As Integer = 0
+
+    Dim iErrorCount As Integer = 0
+
+    Dim iModifiedPartsFromExcel As Integer = 0
+
+    Private inputLock As New Object
+
+    'Dim xmlDoc As Xml.XmlDocument
+    'Integer
+    Dim iPartCount As Integer = 0
+
+    Dim iPartsBuilt As Integer = 0
+
+    Dim iPartsFailed As Integer = 0
+
+    'List
+    Dim lexcelInfoSelections As New List(Of String)
+
+    Private logLock As New Object
+
+    Private logPartLock As New Object
+
+    Dim maxTasks As Integer = 1
+
+    Private modifyLock As New Object
+
+    Private newPartLock As New Object
+
+    Dim partitionPartsBuilt As Integer = 0
+
+    Dim partitionPartsFailed As Integer = 0
+
+    Dim partsStack As Stack(Of AAL.Part)
+
+    Dim pdbPartition As MGCPCBPartsEditor.Partition
+
+    Dim pdbUnit As MGCPCB.EPcbUnit = MGCPCB.EPcbUnit.epcbUnitCurrent
+
+    Dim pedApp As MGCPCBPartsEditor.PartsEditorDlg
+
+    Dim pedDoc As MGCPCBPartsEditor.PartsDB
+
+    Dim timerTotal As New Stopwatch
+
+    ''Object
+    Dim xlsApp As Excel.Application
+
+    Dim xlsBook As Excel.Workbook
+
+    Dim xlsSheet As Excel.Worksheet = Nothing
+
+    Dim xlsSheetName As String = Nothing
+
+#End Region
+
+#Region "Public Delegates"
 
     Delegate Sub d_BuildComplete(ByVal iPartsFailed As Integer, ByVal iPartsBuilt As Integer, ByVal partsNotConsidered As Integer)
 
     Delegate Sub d_BuildFailed(ByVal buildError As BuildPDBError)
 
-    Delegate Sub d_PartitionResults(ByVal partition As String, ByVal time As Decimal, ByVal totalParts As Integer, ByVal partsBuilt As Integer, ByVal partsFailed As Integer)
+    Delegate Sub d_PartitionResults(ByVal partition As String, ByVal time As Decimal, ByVal spreadSheetParts As Integer, ByVal totalParts As Integer, ByVal partsBuilt As Integer, ByVal partsFailed As Integer)
 
     'Delegate
     Delegate Sub d_UpdateComplete(ByVal partsNotConsidered As Integer)
@@ -35,12 +154,16 @@ Public Class frmBuildFromExcel
 
     Delegate Sub d_UpdateTimer()
 
+#End Region
+
+#Region "Public Events"
+
     Event eBuildComplete(ByVal iPartsFailed As Integer, ByVal iPartsBuilt As Integer, ByVal partsNotConsidered As Integer)
 
     Event eBuildFailed(ByVal buildError As BuildPDBError)
 
     'ePartitionResults(pdbPartition.Name, TimeToProcess.ElapsedMilliseconds, kvp.Value.Count(), partitionPartsBuilt, kvp.Value.Count() - partitionPartsBuilt)
-    Event ePartitionResults(ByVal partition As String, ByVal time As Decimal, ByVal totalParts As Integer, ByVal partsBuilt As Integer, ByVal partsFailed As Integer)
+    Event ePartitionResults(ByVal partition As String, ByVal time As Decimal, ByVal spreadSheetParts As Integer, ByVal totalParts As Integer, ByVal partsBuilt As Integer, ByVal partsFailed As Integer)
 
     'Event
     Event eUpdateComplete(partsNotConsidered As Integer)
@@ -51,103 +174,29 @@ Public Class frmBuildFromExcel
 
     Event eUpdateThreads()
 
+#End Region
+
+#Region "Public Enums"
+
+    Public Enum BuildPDBError
+        errDueToUnableToOpenPDBEditor = 0
+        errDueToUnableToFindFile = 1
+    End Enum
+
+#End Region
+
+#Region "Public Properties"
+
     Public Property LogFile As String
     Public Property mappingsLeftToProcess As Integer
 
 #End Region
 
-#Region "Private Fields + Properties + Events + Delegates + Enums"
+#Region "Private Properties"
 
     Private Property activeSheet As Worksheet
 
     Private Property partsLeftToRead As Integer
-    Dim ActiveThreads As Integer = 1
-
-    Private addLock As New Object
-
-    'Arraylist
-    Dim alPartPartitionList As New ArrayList()
-
-    'Boolean
-    Dim bCloseExcel As Boolean = False
-
-    Dim col_Cell As String
-    Dim col_Height As String
-
-    'String
-    Dim col_Partition As String
-
-    Dim col_PartNumber As String
-    Dim col_RefDes As String
-    Dim col_Symbol As String
-
-    'Dictionary
-    Dim dic_Height As New Dictionary(Of String, Double)
-
-    Dim dic_UnableToSave As New Dictionary(Of String, List(Of String))(StringComparer.OrdinalIgnoreCase)
-
-    'Dim dicBadData As New Dictionary(Of String, Dictionary(Of String, List(Of String)))(StringComparer.OrdinalIgnoreCase)
-    Dim dicBadPartitionData As New Dictionary(Of String, Dictionary(Of String, AAL.Part))(StringComparer.OrdinalIgnoreCase)
-
-    Dim dicBadParts As New Dictionary(Of String, Dictionary(Of String, List(Of String)))(StringComparer.OrdinalIgnoreCase)
-    Dim dicDuplicateParts As New Dictionary(Of String, List(Of String))(StringComparer.OrdinalIgnoreCase)
-    Dim dicExceptionParts As New Dictionary(Of String, Integer)
-
-    'UserInput
-    Dim dicInputData As New Dictionary(Of String, Dictionary(Of String, Array))
-
-    Dim dicLogReport As New Dictionary(Of String, ArrayList)
-    Dim dicMappingData As New SortedDictionary(Of String, Dictionary(Of String, AAL.Part))(StringComparer.OrdinalIgnoreCase)
-    Dim dicModifiedParts As New Dictionary(Of String, Dictionary(Of String, List(Of String)))(StringComparer.OrdinalIgnoreCase)
-
-    'Dictionary
-    Dim dicPartitionData As New Dictionary(Of String, AAL.PartPartition)(StringComparer.OrdinalIgnoreCase)
-
-    Dim dicSuccessfulByPartition As New Dictionary(Of String, List(Of String))
-
-    Private errLock As New Object
-    Dim errStack As Stack(Of AAL.Part)
-    Private getPartInfoLock As New Object
-
-    'Integers
-    Dim iBadPartsFromExcel As Integer = 0
-
-    Dim iErrorCount As Integer = 0
-    Dim iModifiedPartsFromExcel As Integer = 0
-    Private inputLock As New Object
-
-    'Dim xmlDoc As Xml.XmlDocument
-    'Integer
-    Dim iPartCount As Integer = 0
-
-    Dim iPartsBuilt As Integer = 0
-    Dim iPartsFailed As Integer = 0
-
-    'List
-    Dim lexcelInfoSelections As New List(Of String)
-
-    Private logLock As New Object
-    Private logPartLock As New Object
-    Dim maxTasks As Integer = 1
-    Private modifyLock As New Object
-    Private newPartLock As New Object
-    Dim partitionPartsBuilt As Integer = 0
-    Dim partitionPartsFailed As Integer = 0
-    Dim partsStack As Stack(Of AAL.Part)
-    Dim pdbPartition As MGCPCBPartsEditor.Partition
-
-    Dim pedApp As MGCPCBPartsEditor.PartsEditorDlg
-
-    Dim pedDoc As MGCPCBPartsEditor.PartsDB
-
-    Dim timerTotal As New Stopwatch
-
-    ''Object
-    Dim xlsApp As Excel.Application
-
-    Dim xlsBook As Excel.Workbook
-    Dim xlsSheet As Excel.Worksheet = Nothing
-    Dim xlsSheetName As String = Nothing
 
 #End Region
 
@@ -535,14 +584,30 @@ Public Class frmBuildFromExcel
         btnClearCell.Visible = False
     End Sub
 
+    Private Sub btnClearDescription_Click(sender As Object, e As EventArgs) Handles btnClearDescription.Click
+        cboxDescription.SelectedIndex = -1
+        btnClearDescription.Visible = False
+    End Sub
+
     Private Sub btnClearHeight_Click(sender As Object, e As EventArgs) Handles btnClearHeight.Click
         cbox_Height.SelectedIndex = -1
         btnClearHeight.Visible = False
+        cboxUnit.Visible = False
     End Sub
 
     Private Sub btnClearPartition_Click(sender As Object, e As EventArgs) Handles btnClearPartition.Click
         cboxPartPartition.SelectedIndex = -1
         btnClearPartition.Visible = False
+    End Sub
+
+    Private Sub btnClearPartLabel_Click(sender As Object, e As EventArgs) Handles btnClearPartLabel.Click
+        cboxPartLabel.SelectedIndex = -1
+        btnClearPartLabel.Visible = False
+    End Sub
+
+    Private Sub btnClearPartName_Click(sender As Object, e As EventArgs) Handles btnClearPartName.Click
+        cboxPartName.SelectedIndex = -1
+        btnClearPartName.Visible = False
     End Sub
 
     Private Sub btnClearPN_Click(sender As Object, e As EventArgs) Handles btnClearPN.Click
@@ -588,6 +653,10 @@ Public Class frmBuildFromExcel
             col_RefDes = Nothing
             col_Height = Nothing
 
+            col_PartName = Nothing
+            col_PartLabel = Nothing
+            col_Description = Nothing
+
             'dicBadParts = New Dictionary(Of String, List(Of String))
             'dicMissingCells = New Dictionary(Of String, List(Of String))
             iPartCount = 0
@@ -609,6 +678,27 @@ Public Class frmBuildFromExcel
             End If
             If Not cbox_Height.SelectedIndex = -1 Then
                 col_Height = cbox_Height.Text
+                Select Case cboxUnit.SelectedIndex
+                    Case 0
+                        pdbUnit = MGCPCB.EPcbUnit.epcbUnitInch
+                    Case 1
+                        pdbUnit = MGCPCB.EPcbUnit.epcbUnitMils
+                    Case 2
+                        pdbUnit = MGCPCB.EPcbUnit.epcbUnitMM
+                    Case 3
+                        pdbUnit = MGCPCB.EPcbUnit.epcbUnitUM
+                End Select
+
+            End If
+
+            If Not cboxPartName.SelectedIndex = -1 Then
+                col_PartName = cboxPartName.Text
+            End If
+            If Not cboxPartLabel.SelectedIndex = -1 Then
+                col_PartLabel = cboxPartLabel.Text
+            End If
+            If Not cboxDescription.SelectedIndex = -1 Then
+                col_Description = cboxDescription.Text
             End If
 
             tv_Parts.Nodes.Clear()
@@ -798,12 +888,12 @@ FoundPart:
                                     If IsNothing(aalPart.AssociatedParts) Then
                                         ocBuildPDB.Errors.Add("Mapping: " & aalPart.HashCode & " has a null Associated Parts container.")
                                     Else
-                                        For Each pn As String In aalPart.AssociatedParts
+                                        For Each part As AAL.Part In aalPart.AssociatedParts
 
                                             If chkbox_RebuildParts.Checked = True Then
-                                                If frmMain.librarydata.PartList.ContainsKey(pn) Then
+                                                If frmMain.librarydata.PartList.ContainsKey(part.Number) Then
                                                     For Each pdbTempPartition As MGCPCBPartsEditor.Partition In pedDoc.Partitions()
-                                                        For Each pdbPart As MGCPCBPartsEditor.Part In pdbTempPartition.Parts(MGCPCBPartsEditor.EPDBPartType.epdbPartAll, pn)
+                                                        For Each pdbPart As MGCPCBPartsEditor.Part In pdbTempPartition.Parts(MGCPCBPartsEditor.EPDBPartType.epdbPartAll, part.Number)
                                                             pdbPart.Delete()
                                                         Next
                                                     Next
@@ -812,12 +902,30 @@ FoundPart:
                                             End If
 
                                             Try
-                                                pdbMapping.Copy(pn, pn, pn)
-                                                partitionPartsBuilt += 1
+                                                Dim pdbPart As MGCPCBPartsEditor.Part = pdbMapping.Copy(part.Number, part.Name, part.Label)
+
+                                                pdbPart.Description = part.Description
+
+                                                Dim oProperty As MGCPCBPartsEditor.Property
+
+                                                If Not part.Height = 0 Then
+
+                                                    Try
+                                                        If Not IsNothing(part.Unit) Then
+                                                            oProperty = pdbPart.PutPropertyEx("Height", part.Height, part.Unit)
+                                                        Else
+                                                            oProperty = pdbPart.PutPropertyEx("Height", part.Height)
+                                                        End If
+                                                    Catch ex As Exception
+                                                        ocBuildPDB.Warnings.Add("[Build PDB Error] Cannot add property: ""Height"", with value: " & part.Height)
+                                                    End Try
+                                                End If
+
                                                 iPartsBuilt += 1
-                                                RaiseEvent eUpdateMainParts(pdbPartition.Name, pn)
+
+                                                RaiseEvent eUpdateMainParts(pdbPartition.Name, part.Number)
                                             Catch ex As Exception
-                                                ocBuildPDB.Errors.Add("Can not copy pin mapping from " & pdbMapping.Number & " to " & pn & ". Error: " & ex.Message.ToString())
+                                                ocBuildPDB.Errors.Add("Can not copy pin mapping from " & pdbMapping.Number & " to " & part.Number & ". Error: " & ex.Message.ToString())
                                             End Try
                                         Next
                                     End If
@@ -840,13 +948,11 @@ FoundPart:
 
                                         LogPart(logItem)
 
-                                        If IsNothing(aalPart.AssociatedParts) Then
-                                            ocBuildPDB.Errors.Add("Mapping: " & aalPart.HashCode & " has a null Associated Parts container.")
-                                        Else
-                                            For Each pn As String In aalPart.AssociatedParts
-                                                ocBuildPDB.Errors.Add("Failed to add part " & pn & " because it was associated with a mapping " & aalPart.Number & " that failed to build.")
+                                        If Not IsNothing(aalPart.AssociatedParts) Then
+                                            For Each part As AAL.Part In aalPart.AssociatedParts
+                                                logItem = New BuildPDBLogItem(success, part.Number, ocBuildPDB.Errors, ocBuildPDB.Warnings, ocBuildPDB.Notes, ocBuildPDB.LogAlternateSymbols)
                                                 partitionPartsFailed += 1
-
+                                                LogPart(logItem)
                                             Next
                                         End If
 
@@ -879,8 +985,8 @@ FoundPart:
                                     If IsNothing(aalPart.AssociatedParts) Then
                                         ocBuildPDB.Errors.Add("Mapping: " & aalPart.HashCode & " has a null Associated Parts container.")
                                     Else
-                                        For Each pn As String In aalPart.AssociatedParts
-                                            ocBuildPDB.Errors.Add("Failed to add part " & pn & " because it was associated with a mapping " & aalPart.Number & " that failed to build.")
+                                        For Each part As AAL.Part In aalPart.AssociatedParts
+                                            ocBuildPDB.Errors.Add("Failed to add part " & part.Number & " because it was associated with a mapping " & aalPart.Number & " that failed to build.")
                                             partitionPartsFailed += 1
 
                                         Next
@@ -922,8 +1028,8 @@ FoundPart:
 
                             partitionPartsFailed += 1
                             Try
-                                For Each pn As String In aalPart.AssociatedParts
-                                    errorList.Add("Failed to add part " & pn & " because it was associated with a mapping " & aalPart.Number & " that failed to build.")
+                                For Each part As AAL.Part In aalPart.AssociatedParts
+                                    errorList.Add("Failed to add part " & part.Number & " because it was associated with a mapping " & aalPart.Number & " that failed to build.")
                                     partitionPartsFailed += 1
 
                                 Next
@@ -1254,7 +1360,7 @@ FoundPart:
 
             TimeToProcess.Stop()
 
-            RaiseEvent ePartitionResults(kvp.Key, TimeToProcess.ElapsedMilliseconds, partitionPartsBuilt + partitionPartsFailed, partitionPartsBuilt, partitionPartsFailed)
+            RaiseEvent ePartitionResults(kvp.Key, TimeToProcess.ElapsedMilliseconds, dicSpreadsheetPartCount(kvp.Key), partitionPartsBuilt + partitionPartsFailed, partitionPartsBuilt, partitionPartsFailed)
             Try
                 pedApp.Quit()
             Catch ex As Exception
@@ -1270,7 +1376,7 @@ FoundPart:
 
             If chkboxLogPerPartition.Checked And dicBadParts.Keys.Contains(kvp.Key) Then
 
-                Dim dicLogReport As New Dictionary(Of String, ArrayList)
+                'Dim dicLogReport As New Dictionary(Of String, ArrayList)
 
                 For Each Partition As String In dicBadParts.Keys
 
@@ -1347,6 +1453,8 @@ FoundPart:
     Private Sub cbox_Height_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cbox_Height.SelectedIndexChanged
         If Not sender.selectedIndex = -1 Then
             btnClearHeight.Visible = True
+            cboxUnit.Visible = True
+            cboxUnit.SelectedIndex = 1
         End If
     End Sub
 
@@ -1423,6 +1531,24 @@ FoundPart:
             xlsSheet.Select()
         End If
 
+    End Sub
+
+    Private Sub cboxDescription_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cboxDescription.SelectedIndexChanged
+        If Not sender.selectedIndex = -1 Then
+            btnClearDescription.Visible = True
+        End If
+    End Sub
+
+    Private Sub cboxPartLabel_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cboxPartLabel.SelectedIndexChanged
+        If Not sender.selectedIndex = -1 Then
+            btnClearPartLabel.Visible = True
+        End If
+    End Sub
+
+    Private Sub cboxPartName_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cboxPartName.SelectedIndexChanged
+        If Not sender.selectedIndex = -1 Then
+            btnClearPartName.Visible = True
+        End If
     End Sub
 
     Private Sub cboxPartPartition_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cboxPartPartition.SelectedIndexChanged
@@ -1710,19 +1836,19 @@ FoundPart:
     Private Function LogPartInfo(aalPart As AAL.Part) As String()
 
         SyncLock getPartInfoLock
-            Dim dicPartInputData As Dictionary(Of String, Array)
+            Dim dicPartInputData As Dictionary(Of String, String())
 
             If dicInputData.ContainsKey(aalPart.Partition) Then
                 dicPartInputData = dicInputData.Item(aalPart.Partition)
             Else
-                dicPartInputData = New Dictionary(Of String, Array)
+                dicPartInputData = New Dictionary(Of String, String())
                 dicInputData.Add(aalPart.Partition, dicPartInputData)
             End If
 
             If dicPartInputData.ContainsKey(aalPart.Number) Then
                 Return dicPartInputData.Item(aalPart.Number)
             Else
-                Dim partInfo(4) As String
+                Dim partInfo As String()
                 dicPartInputData.Add(aalPart.Number, partInfo)
                 Return partInfo
             End If
@@ -1733,12 +1859,12 @@ FoundPart:
     Private Function LogPartInfo(aalPart As AAL.Part, partInfo As String()) As String()
 
         SyncLock inputLock
-            Dim dicPartInputData As Dictionary(Of String, Array)
+            Dim dicPartInputData As Dictionary(Of String, String())
 
             If dicInputData.ContainsKey(aalPart.Partition) Then
                 dicPartInputData = dicInputData.Item(aalPart.Partition)
             Else
-                dicPartInputData = New Dictionary(Of String, Array)
+                dicPartInputData = New Dictionary(Of String, String())
                 dicInputData.Add(aalPart.Partition, dicPartInputData)
             End If
 
@@ -1748,11 +1874,11 @@ FoundPart:
 
     End Function
 
-    Private Sub LogPartitionResults(partition As String, time As Decimal, totalParts As Integer, partsBuilt As Integer, partsFailed As Integer)
+    Private Sub LogPartitionResults(partition As String, time As Decimal, spreadSheetParts As Integer, totalParts As Integer, partsBuilt As Integer, partsFailed As Integer)
         If Me.InvokeRequired Then
 
             Dim d As New d_PartitionResults(AddressOf LogPartitionResults)
-            Me.Invoke(d, New Object() {partition, time, totalParts, partsBuilt, partsFailed})
+            Me.Invoke(d, New Object() {partition, time, spreadSheetParts, totalParts, partsBuilt, partsFailed})
         Else
 
             Dim t As TimeSpan = TimeSpan.FromMilliseconds(time)
@@ -1762,7 +1888,7 @@ FoundPart:
                         t.Seconds,
                         t.Milliseconds)
 
-            dgvResults.Rows.Add(New String() {partition, answer, totalParts, partsBuilt, partsFailed})
+            dgvResults.Rows.Add(New String() {partition, answer, spreadSheetParts, totalParts, partsBuilt, partsFailed, spreadSheetParts - partsBuilt})
         End If
     End Sub
 
@@ -1793,7 +1919,7 @@ FoundPart:
             For Each aalPart As AAL.Part In aalPartition.Parts
 
                 If dicMappings.ContainsKey(aalPart.HashCode) Then
-                    dicMappings(aalPart.HashCode()).AssociatedParts.Add(aalPart.Number)
+                    dicMappings(aalPart.HashCode()).AssociatedParts.Add(aalPart)
                 Else
                     dicMappings(aalPart.HashCode()) = aalPart
                 End If
@@ -1834,18 +1960,18 @@ FoundPart:
             End If
         End With
 
-        Dim logFile As String = frmMain.librarydata.LogPath & "Build PDB from Excel"
+        LogFile = frmMain.librarydata.LogPath & "Build PDB from Excel"
 
         If chkboxLogPerPartition.Checked Then
-            logFile = logFile & " - " & partition
+            LogFile = LogFile & " - " & partition
         End If
 
-        logFile = logFile & ".log"
+        LogFile = LogFile & ".log"
 
         If chkboxLogPerPartition.Checked Then
-            If My.Computer.FileSystem.FileExists(logFile) Then
+            If My.Computer.FileSystem.FileExists(LogFile) Then
 
-                My.Computer.FileSystem.DeleteFile(logFile)
+                My.Computer.FileSystem.DeleteFile(LogFile)
 
             End If
         End If
@@ -1861,7 +1987,7 @@ FoundPart:
         Dim partIter As Integer = 1
 
         Try
-            Using writer As StreamWriter = New StreamWriter(logFile, True, System.Text.Encoding.ASCII)
+            Using writer As StreamWriter = New StreamWriter(LogFile, True, System.Text.Encoding.ASCII)
                 Using tsv As StreamWriter = New StreamWriter(tsvFile, True, System.Text.Encoding.ASCII)
                     writer.WriteLine(partition & ": ")
 
@@ -2049,9 +2175,11 @@ FoundPart:
 
         Dim sb_Parts As New StringBuilder
 
-        Do While Not IsNothing(xls_Sheet.Range(col_PartNumber & i).Value)
+        Dim lastRow As Integer = xls_Sheet.UsedRange.Rows.Count
 
-            RaiseEvent eUpdateStatus("Reading " & xls_Sheet.Name & " row: " & i)
+        Do While i <= lastRow
+
+            RaiseEvent eUpdateStatus("Rows left to read: " & (lastRow - i))
 
             Dim bProblem As Boolean = False
             Dim aalPart As New AAL.Part
@@ -2066,6 +2194,10 @@ FoundPart:
             If IsNothing(aalPart.Partition.Trim) Then bProblem = True
 
             aalPart.Number = xls_Sheet.Range(col_PartNumber & i).Value
+            If IsNothing(aalPart.Number) Then
+                i = i + 1
+                Continue Do
+            End If
             aalPart.Number = aalPart.Number.TrimEnd(New Char() {"\r", "\n", "\s", "\t"})
 
             Dim aalPartition As AAL.PartPartition
@@ -2123,15 +2255,21 @@ FoundPart:
             Else
                 aalPartition = New AAL.PartPartition
                 aalPartition.Name = aalPart.Partition.Trim
+                If Not dicSpreadsheetPartCount.ContainsKey(aalPart.Partition.Trim) Then
+                    dicSpreadsheetPartCount.Add(aalPart.Partition.Trim, 1)
+                Else
+                    dicSpreadsheetPartCount.Item(aalPart.Partition.Trim) += 1
+                End If
+
             End If
 
-            Dim dicPartInputData As Dictionary(Of String, Array)
-            Dim partInfo(4) As String
+            Dim dicPartInputData As Dictionary(Of String, String())
+            Dim partInfo(6) As String
 
             If dicInputData.ContainsKey(aalPart.Partition) Then
                 dicPartInputData = dicInputData.Item(aalPart.Partition)
             Else
-                dicPartInputData = New Dictionary(Of String, Array)
+                dicPartInputData = New Dictionary(Of String, String())
                 dicInputData.Add(aalPart.Partition, dicPartInputData)
             End If
 
@@ -2155,13 +2293,39 @@ FoundPart:
 
             If Not IsNothing(col_Height) Then
                 If Not String.IsNullOrEmpty(xls_Sheet.Range(col_Height & i).Value) Then
-                    If Regex.IsMatch(xls_Sheet.Range(col_Height & i).Value, "^[0-9 ]+$") Then
-                        aalPart.Height = xls_Sheet.Range(col_Height & i).Value
+                    If Regex.IsMatch(xls_Sheet.Range(col_Height & i).Value, "^[0-9]([.,][0-9]{1,3})?$") Then
+                        Dim height As Double = xls_Sheet.Range(col_Height & i).Value
+                        aalPart.Height = height
+                        aalPart.Unit = pdbUnit
                     End If
                 End If
                 partInfo(1) = aalPart.Height
             Else
                 partInfo(1) = ""
+            End If
+
+            If Not IsNothing(col_Description) Then
+                Dim description As String = xls_Sheet.Range(col_Description & i).Value
+                aalPart.Description = description
+                partInfo(4) = aalPart.Description
+            Else
+                partInfo(4) = ""
+            End If
+
+            If Not IsNothing(col_PartName) Then
+                Dim name As String = xls_Sheet.Range(col_PartName & i).Value
+                aalPart.Name = name
+                partInfo(5) = aalPart.Name
+            Else
+                partInfo(5) = ""
+            End If
+
+            If Not IsNothing(col_PartLabel) Then
+                Dim label As String = xls_Sheet.Range(col_PartLabel & i).Value
+                aalPart.Label = label
+                partInfo(6) = aalPart.Label
+            Else
+                partInfo(6) = ""
             End If
 
             Dim xlsSymValue As String = xls_Sheet.Range(col_Symbol & i).Value
@@ -2512,6 +2676,12 @@ MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button1
 
         Dim partitionIter As Integer = 1
         Dim partIter As Integer = 1
+
+        LogFile = frmMain.librarydata.LogPath & " Build PDB from Excel.log"
+
+        If File.Exists(LogFile) Then
+            File.Delete(LogFile)
+        End If
 
         For Each kvp As KeyValuePair(Of String, ArrayList) In dicLogReport
 

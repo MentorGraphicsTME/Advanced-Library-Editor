@@ -7,3 +7,4 @@ obj/*
 */obj/*
 obj
 bin
+/.vs/Advanced Library Editor/v15/server/sqlite3/*
