@@ -227,6 +227,12 @@
     <Compile Include="Form - Change Outline Strokes.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Form - Compress LMC for DMS.Designer.vb">
+      <DependentUpon>Form - Compress LMC for DMS.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Form - Compress LMC for DMS.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form - Delete PDB Properties.designer.vb">
       <DependentUpon>Form - Delete PDB Properties.vb</DependentUpon>
     </Compile>
@@ -428,6 +434,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Form - Change Outline Strokes.resx">
       <DependentUpon>Form - Change Outline Strokes.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form - Compress LMC for DMS.resx">
+      <DependentUpon>Form - Compress LMC for DMS.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Form - Delete PDB Properties.resx">
       <DependentUpon>Form - Delete PDB Properties.vb</DependentUpon>
@@ -695,7 +704,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_AssemblyInfoFilename="My Project\AssemblyInfo.vb" BuildVersion_UseGlobalSettings="True" BuildVersion_StartDate="2000/1/1" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UpdateFileVersion="True" />
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_StartDate="2000/1/1" BuildVersion_UseGlobalSettings="True" BuildVersion_AssemblyInfoFilename="My Project\AssemblyInfo.vb" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
